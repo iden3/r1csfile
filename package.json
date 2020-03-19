@@ -1,0 +1,30 @@
+{
+  "name": "r1csfile",
+  "version": "0.0.1",
+  "description": "r1cs file format parser",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iden3/r1csfile.git"
+  },
+  "keywords": [
+    "r1cs",
+    "circom",
+    "zero",
+    "knoledge",
+    "format",
+    "parser"
+  ],
+  "author": "Jordi Baylina",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/iden3/r1csfile/issues"
+  },
+  "homepage": "https://github.com/iden3/r1csfile#readme"
+}
