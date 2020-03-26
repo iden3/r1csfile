@@ -53,10 +53,10 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
     const n8 = await readU32();
     res.prime = await readBigInt();
 
-    res.nWires = await readU32();
-    res.nPubOuts = await readU32();
-    res.nPubIns = await readU32();
-    res.nPrvIns = await readU32();
+    res.nVars = await readU32();
+    res.nOutputs = await readU32();
+    res.nPubInputs = await readU32();
+    res.nPrvInputs = await readU32();
     res.nLabels = await readU64();
     res.nConstraints = await readU32();
 
@@ -80,7 +80,7 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
         p = pMap;
 
         res.map = [];
-        for (let i=0; i<res.nLabels; i++) {
+        for (let i=0; i<res.nVars; i++) {
             const idx = await readU64();
             res.map.push(idx);
         }
@@ -102,7 +102,7 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
 
     async function readU64() {
         const b = Buffer.allocUnsafe(8);
-        await fd.read(b, 0, 4, p);
+        await fd.read(b, 0, 8, p);
 
         p+=8;
 
@@ -117,7 +117,7 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
 
         const arr = new Array(n32);
         for (let i=0; i<n32; i++) {
-            arr[n32-1-i] = b.readUInt32LL(i*4);
+            arr[n32-1-i] = b.readUInt32LE(i*4);
         }
 
         const n = bigInt.fromArray(arr, 0x100000000);
