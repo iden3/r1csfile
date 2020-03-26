@@ -106,7 +106,10 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
 
         p+=8;
 
-        return Number(b.readBigUInt64LE(0));
+        const LS = b.readUInt32LE(0);
+        const MS = b.readUInt32LE(4);
+
+        return MS * 0x100000000 + LS;
     }
 
     async function readBigInt() {
