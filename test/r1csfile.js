@@ -1,7 +1,7 @@
 const r1cs = require("../index.js");
 const path = require("path");
 const assert = require("assert");
-const utils = require("../src/utils");
+const { stringifyBigInts } = require("ffjavascript").utils;
 
 const expected = {
     "prime": "21888242871839275222246405745257275088548364400416034343698204186575808495617",
@@ -67,6 +67,7 @@ describe("Parse R1CS file", function () {
     it("Parse example file", async () => {
         const readed = await r1cs.load(path. join(__dirname , "testutils", "example.r1cs"), true, true);
 
-        assert.deepEqual(utils.stringifyBigInts(readed), expected);
+        delete readed.Fr;
+        assert.deepEqual(stringifyBigInts(readed), expected);
     });
 });

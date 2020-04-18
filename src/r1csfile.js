@@ -1,7 +1,7 @@
-
+const Scalar = require("ffjavascript").Scalar;
 const fs = require("fs");
 const assert = require("assert");
-const bigInt = require("big-integer");
+const ZqField = require("ffjavascript").ZqField;
 
 module.exports.loadR1cs = loadR1cs;
 
@@ -52,6 +52,7 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
     p = pHeader;
     const n8 = await readU32();
     res.prime = await readBigInt();
+    res.Fr = new ZqField(res.prime);
 
     res.nVars = await readU32();
     res.nOutputs = await readU32();
@@ -123,7 +124,7 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
             arr[n32-1-i] = b.readUInt32LE(i*4);
         }
 
-        const n = bigInt.fromArray(arr, 0x100000000);
+        const n = Scalar.fromArray(arr, 0x100000000);
 
         return n;
     }
@@ -141,7 +142,7 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
         const nIdx = await readU32();
         for (let i=0; i<nIdx; i++) {
             const idx = await readU32();
-            const val = await readBigInt();
+            const val = res.Fr.e(await readBigInt());
             lc[idx] = val;
         }
         return lc;
