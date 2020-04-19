@@ -1,16 +1,15 @@
 const Scalar = require("ffjavascript").Scalar;
-const fs = require("fs");
 const assert = require("assert");
 const ZqField = require("ffjavascript").ZqField;
+const fastFile = require("fastfile");
 
 module.exports.loadR1cs = loadR1cs;
 
 async function loadR1cs(fileName, loadConstraints, loadMap) {
     const res = {};
-    const fd = await fs.promises.open(fileName, "r");
+    const fd = await fastFile.readExisting(fileName);
 
-    const b = Buffer.allocUnsafe(4);
-    await fd.read(b, 0, 4, 0);
+    const b = await fd.read(0, 4);
 
     if (b.toString() != "r1cs") assert(false, "Invalid File format");
 
@@ -93,8 +92,7 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
     return res;
 
     async function readU32() {
-        const b = Buffer.allocUnsafe(4);
-        await fd.read(b, 0, 4, p);
+        const b = await fd.read(p, 4);
 
         p+=4;
 
@@ -102,8 +100,7 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
     }
 
     async function readU64() {
-        const b = Buffer.allocUnsafe(8);
-        await fd.read(b, 0, 8, p);
+        const b = await fd.read(p, 8);
 
         p+=8;
 
@@ -114,19 +111,14 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
     }
 
     async function readBigInt() {
-        const n32 = n8/4;
-        const b = Buffer.allocUnsafe(n8);
-        await fd.read(b, 0, n8, p);
+        const buff = await fd.read(p, n8);
+        assert(buff.length == n8);
+        const buffR = Buffer.allocUnsafe(n8);
+        for (let i=0; i<n8; i++) buffR[i] = buff[n8-1-i];
+
         p += n8;
 
-        const arr = new Array(n32);
-        for (let i=0; i<n32; i++) {
-            arr[n32-1-i] = b.readUInt32LE(i*4);
-        }
-
-        const n = Scalar.fromArray(arr, 0x100000000);
-
-        return n;
+        return Scalar.fromString(buffR.toString("hex"), 16);
     }
 
     async function readConstraint() {
