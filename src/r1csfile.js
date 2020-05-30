@@ -9,17 +9,17 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
     const res = {};
     const fd = await fastFile.readExisting(fileName);
 
-    const b = await fd.read(0, 4);
+    const b = await fd.read(4);
+    let readedType = "";
+    for (let i=0; i<4; i++) readedType += String.fromCharCode(b[i]);
 
-    if (b.toString() != "r1cs") assert(false, "Invalid File format");
+    if (readedType != "r1cs") assert(false, fileName + ": Invalid File format");
 
-    let p=4;
-
-    let v = await readU32();
+    let v = await fd.readULE32();
 
     if (v>1) assert(false, "Version not supported");
 
-    const nSections = await readU32();
+    const nSections = await fd.readULE32();
 
     let pHeader;
     let pConstraints;
@@ -28,97 +28,72 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
     let pMap;
     let mapSize;
     for (let i=0; i<nSections; i++) {
-        let ht = await readU32();
-        let hl = await readU64();
+        let ht = await fd.readULE32();
+        let hl = await fd.readULE64();
         if (ht == 1) {
             if (typeof pHeader != "undefined") assert(false, "File has two headder sections");
-            pHeader = p;
+            pHeader = fd.pos;
             headerSize = hl;
         } else if (ht==2) {
             if (typeof pConstraints != "undefined") assert(false, "File has two constraints sections");
-            pConstraints = p;
+            pConstraints = fd.pos;
             constraintsSize = hl;
         } else if (ht==3) {
-            pMap = p;
+            pMap = fd.pos;
             mapSize = hl;
         }
-        p += hl;
+        fd.pos += hl;
     }
 
     if (typeof pHeader == "undefined") assert(false, "File has two header");
 
     // Read Header
-    p = pHeader;
-    const n8 = await readU32();
+    fd.pos = pHeader;
+    const n8 = await fd.readULE32();
     res.prime = await readBigInt();
     res.Fr = new ZqField(res.prime);
 
-    res.nVars = await readU32();
-    res.nOutputs = await readU32();
-    res.nPubInputs = await readU32();
-    res.nPrvInputs = await readU32();
-    res.nLabels = await readU64();
-    res.nConstraints = await readU32();
+    res.nVars = await fd.readULE32();
+    res.nOutputs = await fd.readULE32();
+    res.nPubInputs = await fd.readULE32();
+    res.nPrvInputs = await fd.readULE32();
+    res.nLabels = await fd.readULE64();
+    res.nConstraints = await fd.readULE32();
 
-    if (p != pHeader + headerSize) assert(false, "Invalid header section size");
+    if (fd.pos != pHeader + headerSize) assert(false, "Invalid header section size");
 
     if (loadConstraints) {
         // Read Constraints
-        p = pConstraints;
+        fd.pos = pConstraints;
 
         res.constraints = [];
         for (let i=0; i<res.nConstraints; i++) {
             const c = await readConstraint();
             res.constraints.push(c);
         }
-        if (p != pConstraints + constraintsSize) assert(false, "Invalid constraints size");
+        if (fd.pos != pConstraints + constraintsSize) assert(false, "Invalid constraints size");
     }
 
     // Read Labels
 
     if (loadMap) {
-        p = pMap;
+        fd.pos = pMap;
 
         res.map = [];
         for (let i=0; i<res.nVars; i++) {
-            const idx = await readU64();
+            const idx = await fd.readULE64();
             res.map.push(idx);
         }
-        if (p != pMap + mapSize) assert(false, "Invalid Map size");
+        if (fd.pos != pMap + mapSize) assert(false, "Invalid Map size");
     }
 
     await fd.close();
 
     return res;
 
-    async function readU32() {
-        const b = await fd.read(p, 4);
-
-        p+=4;
-
-        return b.readUInt32LE(0);
-    }
-
-    async function readU64() {
-        const b = await fd.read(p, 8);
-
-        p+=8;
-
-        const LS = b.readUInt32LE(0);
-        const MS = b.readUInt32LE(4);
-
-        return MS * 0x100000000 + LS;
-    }
-
     async function readBigInt() {
-        const buff = await fd.read(p, n8);
-        assert(buff.length == n8);
-        const buffR = Buffer.allocUnsafe(n8);
-        for (let i=0; i<n8; i++) buffR[i] = buff[n8-1-i];
-
-        p += n8;
-
-        return Scalar.fromString(buffR.toString("hex"), 16);
+        const buff = await fd.read(n8);
+        return Scalar.fromRprLE(buff);
     }
 
     async function readConstraint() {
@@ -131,9 +106,9 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
 
     async function readLC() {
         const lc= {};
-        const nIdx = await readU32();
+        const nIdx = await fd.readULE32();
         for (let i=0; i<nIdx; i++) {
-            const idx = await readU32();
+            const idx = await fd.readULE32();
             const val = res.Fr.e(await readBigInt());
             lc[idx] = val;
         }
