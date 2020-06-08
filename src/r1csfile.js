@@ -1,56 +1,75 @@
-const Scalar = require("ffjavascript").Scalar;
 const assert = require("assert");
 const ZqField = require("ffjavascript").ZqField;
+const Scalar = require("ffjavascript").Scalar;
 const fastFile = require("fastfile");
 
-module.exports.loadR1cs = loadR1cs;
+module.exports.load = loadR1cs;
+module.exports.loadHeader = loadR1csHeader;
 
-async function loadR1cs(fileName, loadConstraints, loadMap) {
-    const res = {};
+async function readBinFile(fileName, type, maxVersion) {
+
     const fd = await fastFile.readExisting(fileName);
 
     const b = await fd.read(4);
     let readedType = "";
     for (let i=0; i<4; i++) readedType += String.fromCharCode(b[i]);
 
-    if (readedType != "r1cs") assert(false, fileName + ": Invalid File format");
+    if (readedType != type) assert(false, fileName + ": Invalid File format");
 
     let v = await fd.readULE32();
 
-    if (v>1) assert(false, "Version not supported");
+    if (v>maxVersion) assert(false, "Version not supported");
 
     const nSections = await fd.readULE32();
 
-    let pHeader;
-    let pConstraints;
-    let headerSize;
-    let constraintsSize;
-    let pMap;
-    let mapSize;
+    // Scan sections
+    let sections = [];
     for (let i=0; i<nSections; i++) {
         let ht = await fd.readULE32();
         let hl = await fd.readULE64();
-        if (ht == 1) {
-            if (typeof pHeader != "undefined") assert(false, "File has two headder sections");
-            pHeader = fd.pos;
-            headerSize = hl;
-        } else if (ht==2) {
-            if (typeof pConstraints != "undefined") assert(false, "File has two constraints sections");
-            pConstraints = fd.pos;
-            constraintsSize = hl;
-        } else if (ht==3) {
-            pMap = fd.pos;
-            mapSize = hl;
-        }
+        if (typeof sections[ht] == "undefined") sections[ht] = [];
+        sections[ht].push({
+            p: fd.pos,
+            size: hl
+        });
         fd.pos += hl;
     }
 
-    if (typeof pHeader == "undefined") assert(false, "File has two header");
+    return {fd, sections};
+}
 
+async function startReadUniqueSection(fd, sections, idSection) {
+    assert(typeof fd.readingSection === "undefined", "Already reading a section");
+    if (!sections[idSection])  assert(false, fd.fileName + ": Missing section "+ idSection );
+    if (sections[idSection].length>1) assert(false, fd.fileName +": Section Duplicated " +idSection);
+
+    fd.pos = sections[idSection][0].p;
+
+    fd.readingSection = sections[idSection][0];
+}
+
+async function endReadSection(fd, noCheck) {
+    assert(typeof fd.readingSection != "undefined", "Not reading a section");
+    if (!noCheck) {
+        assert.equal(fd.pos-fd.readingSection.p, fd.readingSection.size);
+    }
+    delete fd.readingSection;
+}
+
+
+async function readBigInt(fd, n8, pos) {
+    const buff = await fd.read(n8, pos);
+    return Scalar.fromRprLE(buff, 0, n8);
+}
+
+async function loadR1csHeader(fd,sections) {
+
+
+    const res = {};
+    await startReadUniqueSection(fd, sections, 1);
     // Read Header
-    fd.pos = pHeader;
-    const n8 = await fd.readULE32();
-    res.prime = await readBigInt();
+    res.n8 = await fd.readULE32();
+    res.prime = await readBigInt(fd, res.n8);
     res.Fr = new ZqField(res.prime);
 
     res.nVars = await fd.readULE32();
@@ -59,42 +78,43 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
     res.nPrvInputs = await fd.readULE32();
     res.nLabels = await fd.readULE64();
     res.nConstraints = await fd.readULE32();
+    await endReadSection(fd);
 
-    if (fd.pos != pHeader + headerSize) assert(false, "Invalid header section size");
+    return res;
+}
+
+async function loadR1cs(fileName, loadConstraints, loadMap) {
+
+    const {fd, sections} = await readBinFile(fileName, "r1cs", 1);
+    const res = await loadR1csHeader(fd, sections);
+
 
     if (loadConstraints) {
-        // Read Constraints
-        fd.pos = pConstraints;
-
+        await startReadUniqueSection(fd, sections, 2);
         res.constraints = [];
         for (let i=0; i<res.nConstraints; i++) {
             const c = await readConstraint();
             res.constraints.push(c);
         }
-        if (fd.pos != pConstraints + constraintsSize) assert(false, "Invalid constraints size");
+        await endReadSection(fd);
     }
 
     // Read Labels
 
     if (loadMap) {
-        fd.pos = pMap;
+        await startReadUniqueSection(fd, sections, 3);
 
         res.map = [];
         for (let i=0; i<res.nVars; i++) {
             const idx = await fd.readULE64();
             res.map.push(idx);
         }
-        if (fd.pos != pMap + mapSize) assert(false, "Invalid Map size");
+        await endReadSection(fd);
     }
 
     await fd.close();
 
     return res;
-
-    async function readBigInt() {
-        const buff = await fd.read(n8);
-        return Scalar.fromRprLE(buff);
-    }
 
     async function readConstraint() {
         const c = [];
@@ -109,7 +129,7 @@ async function loadR1cs(fileName, loadConstraints, loadMap) {
         const nIdx = await fd.readULE32();
         for (let i=0; i<nIdx; i++) {
             const idx = await fd.readULE32();
-            const val = res.Fr.e(await readBigInt());
+            const val = res.Fr.e(await readBigInt(fd, res.n8));
             lc[idx] = val;
         }
         return lc;

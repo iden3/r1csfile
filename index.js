@@ -1,2 +1,2 @@
-module.exports.load = require("./src/r1csfile.js").loadR1cs;
+module.exports = require("./src/r1csfile.js");
 
