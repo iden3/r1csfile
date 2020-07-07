@@ -1,5 +1,11 @@
-import {Scalar, ZqField} from "ffjavascript";
-import fastFile from "fastfile";
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var ffjavascript = require('ffjavascript');
+var fastFile = _interopDefault(require('fastfile'));
 
 async function readBinFile(fileName, type, maxVersion) {
 
@@ -57,10 +63,10 @@ async function endReadSection(fd, noCheck) {
 
 async function readBigInt(fd, n8, pos) {
     const buff = await fd.read(n8, pos);
-    return Scalar.fromRprLE(buff, 0, n8);
+    return ffjavascript.Scalar.fromRprLE(buff, 0, n8);
 }
 
-export async function loadHeader(fd,sections) {
+async function loadHeader(fd,sections) {
 
 
     const res = {};
@@ -68,7 +74,7 @@ export async function loadHeader(fd,sections) {
     // Read Header
     res.n8 = await fd.readULE32();
     res.prime = await readBigInt(fd, res.n8);
-    res.Fr = new ZqField(res.prime);
+    res.Fr = new ffjavascript.ZqField(res.prime);
 
     res.nVars = await fd.readULE32();
     res.nOutputs = await fd.readULE32();
@@ -81,7 +87,7 @@ export async function loadHeader(fd,sections) {
     return res;
 }
 
-export async function load(fileName, loadConstraints, loadMap) {
+async function load(fileName, loadConstraints, loadMap) {
 
     const {fd, sections} = await readBinFile(fileName, "r1cs", 1);
     const res = await loadHeader(fd, sections);
@@ -134,3 +140,5 @@ export async function load(fileName, loadConstraints, loadMap) {
     }
 }
 
+exports.load = load;
+exports.loadHeader = loadHeader;
