@@ -1,10 +1,14 @@
-const r1cs = require("../index.js");
-const path = require("path");
-const assert = require("assert");
-const { stringifyBigInts } = require("ffjavascript").utils;
+import * as r1cs from "../src/r1csfile.js";
+import path from "path";
+import assert from "assert";
+import  { utils, ZqField, Scalar } from "ffjavascript";
+const { stringifyBigInts } = utils;
+
+const primeStr = "21888242871839275222246405745257275088548364400416034343698204186575808495617";
 
 const expected = {
-    "prime": "21888242871839275222246405745257275088548364400416034343698204186575808495617",
+    "n8": 32,
+    "prime": primeStr,
     "nVars": 7,
     "nOutputs": 1,
     "nPubInputs": 2,
@@ -65,7 +69,9 @@ const expected = {
 describe("Parse R1CS file", function () {
     this.timeout(1000000000);
     it("Parse example file", async () => {
-        const readed = await r1cs.load(path. join(__dirname , "testutils", "example.r1cs"), true, true);
+        let readed = await r1cs.load(path. join("test" , "testutils", "example.r1cs"), true, true);
+
+        readed = stringifyBigInts(readed);
 
         delete readed.Fr;
         assert.deepEqual(stringifyBigInts(readed), expected);
