@@ -2,10 +2,8 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
 var ffjavascript = require('ffjavascript');
-var fastFile = _interopDefault(require('fastfile'));
+var fastFile = require('fastfile');
 
 async function readBinFile(fileName, type, maxVersion) {
 

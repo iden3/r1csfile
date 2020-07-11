@@ -1,5 +1,5 @@
 import {Scalar, ZqField} from "ffjavascript";
-import fastFile from "fastfile";
+import * as fastFile from "fastfile";
 
 async function readBinFile(fileName, type, maxVersion) {
 
