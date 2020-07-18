@@ -4,7 +4,7 @@ import commonJS from "rollup-plugin-commonjs";
 export default {
     input: "./src/r1csfile.js",
     output: {
-        file: "build/main.js",
+        file: "build/main.cjs",
         format: "cjs",
     },
     external: ["fastfile", "ffjavascript"],
