@@ -35,7 +35,7 @@
   },
   "homepage": "https://github.com/iden3/r1csfile#readme",
   "dependencies": {
-    "fastfile": "0.0.7",
+    "fastfile": "0.0.16",
     "ffjavascript": "0.2.4"
   },
   "devDependencies": {

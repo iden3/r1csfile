@@ -7,7 +7,7 @@ var fastFile = require('fastfile');
 
 async function readBinFile(fileName, type, maxVersion) {
 
-    const fd = await fastFile.readExisting(fileName);
+    const fd = await fastFile.readExisting(fileName, 1<<20, 1<<22);
 
     const b = await fd.read(4);
     let readedType = "";
