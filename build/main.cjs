@@ -5,9 +5,88 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var ffjavascript = require('ffjavascript');
 var fastFile = require('fastfile');
 
+const SUBARRAY_SIZE = 0x40000;
+
+const BigArrayHandler = {
+    get: function(obj, prop) {
+        if (!isNaN(prop)) {
+            return obj.getElement(prop);
+        } else return obj[prop];
+    },
+    set: function(obj, prop, value) {
+        if (!isNaN(prop)) {
+            return obj.setElement(prop, value);
+        } else {
+            obj[prop] = value;
+            return true;
+        }
+    }
+};
+
+class _BigArray {
+    constructor (initSize) {
+        this.length = initSize || 0;
+        this.arr = new Array(SUBARRAY_SIZE);
+
+        for (let i=0; i<initSize; i+=SUBARRAY_SIZE) {
+            this.arr[i/SUBARRAY_SIZE] = new Array(Math.min(SUBARRAY_SIZE, initSize - i));
+        }
+        return this;
+    }
+    push () {
+        for (let i=0; i<arguments.length; i++) {
+            this.setElement (this.length, arguments[i]);
+        }
+    }
+
+    slice (f, t) {
+        const arr = new Array(t-f);
+        for (let i=f; i< t; i++) arr[i-f] = this.getElement(i);
+        return arr;
+    }
+    getElement(idx) {
+        idx = parseInt(idx);
+        const idx1 = Math.floor(idx / SUBARRAY_SIZE);
+        const idx2 = idx % SUBARRAY_SIZE;
+        return this.arr[idx1] ? this.arr[idx1][idx2] : undefined;
+    }
+    setElement(idx, value) {
+        idx = parseInt(idx);
+        const idx1 = Math.floor(idx / SUBARRAY_SIZE);
+        if (!this.arr[idx1]) {
+            this.arr[idx1] = new Array(SUBARRAY_SIZE);
+        }
+        const idx2 = idx % SUBARRAY_SIZE;
+        this.arr[idx1][idx2] = value;
+        if (idx >= this.length) this.length = idx+1;
+        return true;
+    }
+    getKeys() {
+        const newA = new BigArray();
+        for (let i=0; i<this.arr.length; i++) {
+            if (this.arr[i]) {
+                for (let j=0; j<this.arr[i].length; j++) {
+                    if (typeof this.arr[i][j] !== "undefined") {
+                        newA.push(i*SUBARRAY_SIZE+j);
+                    }
+                }
+            }
+        }
+        return newA;
+    }
+}
+
+class BigArray {
+    constructor( initSize ) {
+        const obj = new _BigArray(initSize);
+        const extObj = new Proxy(obj, BigArrayHandler);
+        return extObj;
+    }
+}
+
 async function readBinFile(fileName, type, maxVersion) {
 
-    const fd = await fastFile.readExisting(fileName, 1<<20, 1<<22);
+    const fd = await fastFile.readExisting(fileName, 1<<27, 1<<29);
 
     const b = await fd.read(4);
     let readedType = "";
@@ -85,7 +164,7 @@ async function loadHeader(fd,sections) {
     return res;
 }
 
-async function load(fileName, loadConstraints, loadMap) {
+async function load(fileName, loadConstraints, loadMap, logger) {
 
     const {fd, sections} = await readBinFile(fileName, "r1cs", 1);
     const res = await loadHeader(fd, sections);
@@ -93,8 +172,13 @@ async function load(fileName, loadConstraints, loadMap) {
 
     if (loadConstraints) {
         await startReadUniqueSection(fd, sections, 2);
-        res.constraints = [];
+        if (res.nConstraints>1<<20) {
+            res.constraints = new BigArray();
+        } else {
+            res.constraints = [];
+        }
         for (let i=0; i<res.nConstraints; i++) {
+            if ((logger)&&(i%10000 == 0)) logger.info(`Loading constraints: ${i}/${res.nConstraints}`);
             const c = await readConstraint();
             res.constraints.push(c);
         }
@@ -105,8 +189,11 @@ async function load(fileName, loadConstraints, loadMap) {
 
     if (loadMap) {
         await startReadUniqueSection(fd, sections, 3);
-
-        res.map = [];
+        if (res.nVars>1<<20) {
+            res.map = new BigArray();
+        } else {
+            res.map = [];
+        }
         for (let i=0; i<res.nVars; i++) {
             const idx = await fd.readULE64();
             res.map.push(idx);
@@ -129,9 +216,11 @@ async function load(fileName, loadConstraints, loadMap) {
     async function readLC() {
         const lc= {};
         const nIdx = await fd.readULE32();
+        const buff = await fd.read( (4+res.n8)*nIdx );
+        const buffV = new DataView(buff.buffer);
         for (let i=0; i<nIdx; i++) {
-            const idx = await fd.readULE32();
-            const val = res.Fr.e(await readBigInt(fd, res.n8));
+            const idx = buffV.getUint32(i*(4+res.n8), true);
+            const val = res.Fr.fromRprLE(buff, i*(4+res.n8)+4);
             lc[idx] = val;
         }
         return lc;

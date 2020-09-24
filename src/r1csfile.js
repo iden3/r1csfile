@@ -1,9 +1,10 @@
 import {Scalar, ZqField} from "ffjavascript";
 import * as fastFile from "fastfile";
+import  BigArray from "@iden3/bigarray";
 
 async function readBinFile(fileName, type, maxVersion) {
 
-    const fd = await fastFile.readExisting(fileName, 1<<20, 1<<22);
+    const fd = await fastFile.readExisting(fileName, 1<<27, 1<<29);
 
     const b = await fd.read(4);
     let readedType = "";
@@ -81,7 +82,7 @@ export async function loadHeader(fd,sections) {
     return res;
 }
 
-export async function load(fileName, loadConstraints, loadMap) {
+export async function load(fileName, loadConstraints, loadMap, logger) {
 
     const {fd, sections} = await readBinFile(fileName, "r1cs", 1);
     const res = await loadHeader(fd, sections);
@@ -89,8 +90,13 @@ export async function load(fileName, loadConstraints, loadMap) {
 
     if (loadConstraints) {
         await startReadUniqueSection(fd, sections, 2);
-        res.constraints = [];
+        if (res.nConstraints>1<<20) {
+            res.constraints = new BigArray();
+        } else {
+            res.constraints = [];
+        }
         for (let i=0; i<res.nConstraints; i++) {
+            if ((logger)&&(i%10000 == 0)) logger.info(`Loading constraints: ${i}/${res.nConstraints}`);
             const c = await readConstraint();
             res.constraints.push(c);
         }
@@ -101,8 +107,11 @@ export async function load(fileName, loadConstraints, loadMap) {
 
     if (loadMap) {
         await startReadUniqueSection(fd, sections, 3);
-
-        res.map = [];
+        if (res.nVars>1<<20) {
+            res.map = new BigArray();
+        } else {
+            res.map = [];
+        }
         for (let i=0; i<res.nVars; i++) {
             const idx = await fd.readULE64();
             res.map.push(idx);
@@ -125,9 +134,11 @@ export async function load(fileName, loadConstraints, loadMap) {
     async function readLC() {
         const lc= {};
         const nIdx = await fd.readULE32();
+        const buff = await fd.read( (4+res.n8)*nIdx );
+        const buffV = new DataView(buff.buffer);
         for (let i=0; i<nIdx; i++) {
-            const idx = await fd.readULE32();
-            const val = res.Fr.e(await readBigInt(fd, res.n8));
+            const idx = buffV.getUint32(i*(4+res.n8), true);
+            const val = res.Fr.fromRprLE(buff, i*(4+res.n8)+4);
             lc[idx] = val;
         }
         return lc;
