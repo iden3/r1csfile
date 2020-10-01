@@ -7,7 +7,7 @@ export default {
         file: "build/main.cjs",
         format: "cjs",
     },
-    external: ["fastfile", "ffjavascript"],
+    external: ["fastfile", "ffjavascript", "@iden3/bigarray"],
     plugins: [
         resolve({ preferBuiltins: true }),
         commonJS({
