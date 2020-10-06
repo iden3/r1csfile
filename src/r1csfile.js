@@ -12,7 +12,7 @@ export async function readR1csHeader(fd,sections) {
     res.n8 = await fd.readULE32();
     res.prime = await binFileUtils.readBigInt(fd, res.n8);
 
-    res.curve = await getCurveFromR(res.prime);
+    res.curve = await getCurveFromR(res.prime, true);
 
     res.nVars = await fd.readULE32();
     res.nOutputs = await fd.readULE32();
