@@ -103,7 +103,7 @@ async function readBigInt(fd, n8, pos) {
     return ffjavascript.Scalar.fromRprLE(buff, 0, n8);
 }
 
-async function readR1csHeader(fd,sections) {
+async function readR1csHeader(fd,sections,singleThread) {
 
 
     const res = {};
@@ -112,7 +112,7 @@ async function readR1csHeader(fd,sections) {
     res.n8 = await fd.readULE32();
     res.prime = await readBigInt(fd, res.n8);
 
-    res.curve = await ffjavascript.getCurveFromR(res.prime, true);
+    res.curve = await ffjavascript.getCurveFromR(res.prime, singleThread);
 
     res.nVars = await fd.readULE32();
     res.nOutputs = await fd.readULE32();
@@ -125,10 +125,10 @@ async function readR1csHeader(fd,sections) {
     return res;
 }
 
-async function readR1cs(fileName, loadConstraints, loadMap, logger, loggerCtx) {
+async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
 
     const {fd, sections} = await readBinFile(fileName, "r1cs", 1, 1<<22, 1<<25);
-    const res = await readR1csHeader(fd, sections);
+    const res = await readR1csHeader(fd, sections, singleThread);
 
 
     if (loadConstraints) {

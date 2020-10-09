@@ -3,7 +3,7 @@ import  BigArray from "@iden3/bigarray";
 import * as binFileUtils from "@iden3/binfileutils";
 
 
-export async function readR1csHeader(fd,sections) {
+export async function readR1csHeader(fd,sections,singleThread) {
 
 
     const res = {};
@@ -12,7 +12,7 @@ export async function readR1csHeader(fd,sections) {
     res.n8 = await fd.readULE32();
     res.prime = await binFileUtils.readBigInt(fd, res.n8);
 
-    res.curve = await getCurveFromR(res.prime, true);
+    res.curve = await getCurveFromR(res.prime, singleThread);
 
     res.nVars = await fd.readULE32();
     res.nOutputs = await fd.readULE32();
@@ -25,10 +25,10 @@ export async function readR1csHeader(fd,sections) {
     return res;
 }
 
-export async function readR1cs(fileName, loadConstraints, loadMap, logger, loggerCtx) {
+export async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
 
     const {fd, sections} = await binFileUtils.readBinFile(fileName, "r1cs", 1, 1<<22, 1<<25);
-    const res = await readR1csHeader(fd, sections);
+    const res = await readR1csHeader(fd, sections, singleThread);
 
 
     if (loadConstraints) {
