@@ -25,68 +25,101 @@ export async function readR1csHeader(fd,sections,singleThread) {
     return res;
 }
 
+export async function readConstraints(fd,sections, r1cs, logger, loggerCtx) {
+    const bR1cs = await binFileUtils.readSection(fd, sections, 2);
+    let bR1csPos = 0;
+    let constraints;
+    if (r1cs.nConstraints>1<<20) {
+        constraints = new BigArray();
+    } else {
+        constraints = [];
+    }
+    for (let i=0; i<r1cs.nConstraints; i++) {
+        if ((logger)&&(i%100000 == 0)) logger.info(`${loggerCtx}: Loading constraints: ${i}/${r1cs.nConstraints}`);
+        const c = readConstraint();
+        constraints.push(c);
+    }
+    return constraints;
+
+
+    function readConstraint() {
+        const c = [];
+        c[0] = readLC();
+        c[1] = readLC();
+        c[2] = readLC();
+        return c;
+    }
+
+    function readLC() {
+        const lc= {};
+
+        const buffUL32 = bR1cs.slice(bR1csPos, bR1csPos+4);
+        bR1csPos += 4;
+        const buffUL32V = new DataView(buffUL32.buffer);
+        const nIdx = buffUL32V.getUint32(0, true);
+
+        const buff = bR1cs.slice(bR1csPos, bR1csPos + (4+r1cs.n8)*nIdx );
+        bR1csPos += (4+r1cs.n8)*nIdx;
+        const buffV = new DataView(buff.buffer);
+        for (let i=0; i<nIdx; i++) {
+            const idx = buffV.getUint32(i*(4+r1cs.n8), true);
+            const val = r1cs.curve.Fr.fromRprLE(buff, i*(4+r1cs.n8)+4);
+            lc[idx] = val;
+        }
+        return lc;
+    }
+}
+
+export async function readMap(fd, sections, r1cs, logger, loggerCtx) {
+    const bMap = await binFileUtils.readSection(fd, sections, 3);
+    let bMapPos = 0;
+    let map;
+
+    if (r1cs.nVars>1<<20) {
+        map = new BigArray();
+    } else {
+        map = [];
+    }
+    for (let i=0; i<r1cs.nVars; i++) {
+        if ((logger)&&(i%10000 == 0)) logger.info(`${loggerCtx}: Loading map: ${i}/${r1cs.nVars}`);
+        const idx = readULE64();
+        map.push(idx);
+    }
+
+    return map;
+
+    function readULE64() {
+        const buffULE64 = bMap.slice(bMapPos, bMapPos+8);
+        bMapPos += 8;
+        const buffULE64V = new DataView(buffULE64.buffer);
+        const LSB = buffULE64V.getUint32(0, true);
+        const MSB = buffULE64V.getUint32(4, true);
+
+        return MSB * 0x100000000 + LSB;
+    }
+
+}
+
 export async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
 
     const {fd, sections} = await binFileUtils.readBinFile(fileName, "r1cs", 1, 1<<22, 1<<25);
+
     const res = await readR1csHeader(fd, sections, singleThread);
 
 
     if (loadConstraints) {
-        await binFileUtils.startReadUniqueSection(fd, sections, 2);
-        if (res.nConstraints>1<<20) {
-            res.constraints = new BigArray();
-        } else {
-            res.constraints = [];
-        }
-        for (let i=0; i<res.nConstraints; i++) {
-            if ((logger)&&(i%100000 == 0)) logger.info(`${loggerCtx}: Loading constraints: ${i}/${res.nConstraints}`);
-            const c = await readConstraint();
-            res.constraints.push(c);
-        }
-        await binFileUtils.endReadSection(fd);
+        res.constraints = await readConstraints(fd, sections, res, logger, loggerCtx);
     }
 
     // Read Labels
 
     if (loadMap) {
-        await binFileUtils.startReadUniqueSection(fd, sections, 3);
-        if (res.nVars>1<<20) {
-            res.map = new BigArray();
-        } else {
-            res.map = [];
-        }
-        for (let i=0; i<res.nVars; i++) {
-            if ((logger)&&(i%10000 == 0)) logger.info(`${loggerCtx}: Loading map: ${i}/${res.nVars}`);
-            const idx = await fd.readULE64();
-            res.map.push(idx);
-        }
-        await binFileUtils.endReadSection(fd);
+        res.map = await readMap(fd, sections, res, logger, loggerCtx);
     }
 
     await fd.close();
 
     return res;
-
-    async function readConstraint() {
-        const c = [];
-        c[0] = await readLC();
-        c[1] = await readLC();
-        c[2] = await readLC();
-        return c;
-    }
-
-    async function readLC() {
-        const lc= {};
-        const nIdx = await fd.readULE32();
-        const buff = await fd.read( (4+res.n8)*nIdx );
-        const buffV = new DataView(buff.buffer);
-        for (let i=0; i<nIdx; i++) {
-            const idx = buffV.getUint32(i*(4+res.n8), true);
-            const val = res.curve.Fr.fromRprLE(buff, i*(4+res.n8)+4);
-            lc[idx] = val;
-        }
-        return lc;
-    }
 }
 
 
