@@ -196,9 +196,9 @@ async function readMap(fd, sections, r1cs, logger, loggerCtx) {
     let map;
 
     if (r1cs.nVars>1<<20) {
-        r1cs.map = new BigArray();
+        map = new BigArray();
     } else {
-        r1cs.map = [];
+        map = [];
     }
     for (let i=0; i<r1cs.nVars; i++) {
         if ((logger)&&(i%10000 == 0)) logger.info(`${loggerCtx}: Loading map: ${i}/${r1cs.nVars}`);
