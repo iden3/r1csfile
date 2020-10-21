@@ -38,7 +38,7 @@
     "@iden3/bigarray": "0.0.2",
     "@iden3/binfileutils": "0.0.3",
     "fastfile": "0.0.18",
-    "ffjavascript": "0.2.27"
+    "ffjavascript": "0.2.28"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
