@@ -222,7 +222,7 @@ async function readMap(fd, sections, r1cs, logger, loggerCtx) {
 
 async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
 
-    const {fd, sections} = await readBinFile(fileName, "r1cs", 1, 1<<22, 1<<25);
+    const {fd, sections} = await readBinFile(fileName, "r1cs", 1, 1<<25, 1<<22);
 
     const res = await readR1csHeader(fd, sections, singleThread);
 
@@ -322,7 +322,7 @@ async function writeR1csMap(fd, cir, logger, loggerCtx) {
 
 async function writeR1cs(fileName, cir, logger, loggerCtx) {
 
-    const fd = await createBinFile(fileName, "r1cs", 1, 3, 1<<22, 1<<24);
+    const fd = await createBinFile(fileName, "r1cs", 1, 3, 1<<25, 1<<22);
 
     await writeR1csHeader(fd, cir);
 
