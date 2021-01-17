@@ -36,7 +36,7 @@
   "homepage": "https://github.com/iden3/r1csfile#readme",
   "dependencies": {
     "@iden3/bigarray": "0.0.2",
-    "@iden3/binfileutils": "0.0.6",
+    "@iden3/binfileutils": "0.0.7",
     "fastfile": "0.0.19",
     "ffjavascript": "0.2.30"
   },
