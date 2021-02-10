@@ -2,135 +2,22 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
 var ffjavascript = require('ffjavascript');
-var BigArray = _interopDefault(require('@iden3/bigarray'));
-var fastFile = require('fastfile');
+var BigArray = require('@iden3/bigarray');
+var binFileUtils = require('@iden3/binfileutils');
 
-async function readBinFile(fileName, type, maxVersion, cacheSize, pageSize) {
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
-    const fd = await fastFile.readExisting(fileName, cacheSize, pageSize);
-
-    const b = await fd.read(4);
-    let readedType = "";
-    for (let i=0; i<4; i++) readedType += String.fromCharCode(b[i]);
-
-    if (readedType != type) throw new Error(fileName + ": Invalid File format");
-
-    let v = await fd.readULE32();
-
-    if (v>maxVersion) throw new Error("Version not supported");
-
-    const nSections = await fd.readULE32();
-
-    // Scan sections
-    let sections = [];
-    for (let i=0; i<nSections; i++) {
-        let ht = await fd.readULE32();
-        let hl = await fd.readULE64();
-        if (typeof sections[ht] == "undefined") sections[ht] = [];
-        sections[ht].push({
-            p: fd.pos,
-            size: hl
-        });
-        fd.pos += hl;
-    }
-
-    return {fd, sections};
-}
-
-async function createBinFile(fileName, type, version, nSections, cacheSize, pageSize) {
-
-    const fd = await fastFile.createOverride(fileName, cacheSize, pageSize);
-
-    const buff = new Uint8Array(4);
-    for (let i=0; i<4; i++) buff[i] = type.charCodeAt(i);
-    await fd.write(buff, 0); // Magic "r1cs"
-
-    await fd.writeULE32(version); // Version
-    await fd.writeULE32(nSections); // Number of Sections
-
-    return fd;
-}
-
-async function startWriteSection(fd, idSection) {
-    if (typeof fd.writingSection !== "undefined") throw new Error("Already writing a section");
-    await fd.writeULE32(idSection); // Header type
-    fd.writingSection = {
-        pSectionSize: fd.pos
-    };
-    await fd.writeULE64(0); // Temporally set to 0 length
-}
-
-async function endWriteSection(fd) {
-    if (typeof fd.writingSection === "undefined") throw new Error("Not writing a section");
-
-    const sectionSize = fd.pos - fd.writingSection.pSectionSize - 8;
-    const oldPos = fd.pos;
-    fd.pos = fd.writingSection.pSectionSize;
-    await fd.writeULE64(sectionSize);
-    fd.pos = oldPos;
-    delete fd.writingSection;
-}
-
-async function startReadUniqueSection(fd, sections, idSection) {
-    if (typeof fd.readingSection !== "undefined") throw new Error("Already reading a section");
-    if (!sections[idSection])  throw new Error(fd.fileName + ": Missing section "+ idSection );
-    if (sections[idSection].length>1) throw new Error(fd.fileName +": Section Duplicated " +idSection);
-
-    fd.pos = sections[idSection][0].p;
-
-    fd.readingSection = sections[idSection][0];
-}
-
-async function endReadSection(fd, noCheck) {
-    if (typeof fd.readingSection === "undefined") throw new Error("Not reading a section");
-    if (!noCheck) {
-        if (fd.pos-fd.readingSection.p !=  fd.readingSection.size) throw new Error("Invalid section size reading");
-    }
-    delete fd.readingSection;
-}
-
-async function writeBigInt(fd, n, n8, pos) {
-    const buff = new Uint8Array(n8);
-    ffjavascript.Scalar.toRprLE(buff, 0, n, n8);
-    await fd.write(buff, pos);
-}
-
-async function readBigInt(fd, n8, pos) {
-    const buff = await fd.read(n8, pos);
-    return ffjavascript.Scalar.fromRprLE(buff, 0, n8);
-}
-
-async function readSection(fd, sections, idSection, offset, length) {
-
-    offset = (typeof offset === "undefined") ? 0 : offset;
-    length = (typeof length === "undefined") ? sections[idSection][0].size - offset : length;
-
-    if (offset + length > sections[idSection][0].size) {
-        throw new Error("Reading out of the range of the section");
-    }
-
-    let buff;
-    if (length < (1 << 30) ) {
-        buff = new Uint8Array(length);
-    } else {
-        buff = new ffjavascript.BigBuffer(length);
-    }
-
-    await fd.readToBuffer(buff, 0, length, sections[idSection][0].p + offset);
-    return buff;
-}
+var BigArray__default = /*#__PURE__*/_interopDefaultLegacy(BigArray);
 
 async function readR1csHeader(fd,sections,singleThread) {
 
 
     const res = {};
-    await startReadUniqueSection(fd, sections, 1);
+    await binFileUtils.startReadUniqueSection(fd, sections, 1);
     // Read Header
     res.n8 = await fd.readULE32();
-    res.prime = await readBigInt(fd, res.n8);
+    res.prime = await binFileUtils.readBigInt(fd, res.n8);
 
     res.curve = await ffjavascript.getCurveFromR(res.prime, singleThread);
 
@@ -140,17 +27,17 @@ async function readR1csHeader(fd,sections,singleThread) {
     res.nPrvInputs = await fd.readULE32();
     res.nLabels = await fd.readULE64();
     res.nConstraints = await fd.readULE32();
-    await endReadSection(fd);
+    await binFileUtils.endReadSection(fd);
 
     return res;
 }
 
 async function readConstraints(fd,sections, r1cs, logger, loggerCtx) {
-    const bR1cs = await readSection(fd, sections, 2);
+    const bR1cs = await binFileUtils.readSection(fd, sections, 2);
     let bR1csPos = 0;
     let constraints;
     if (r1cs.nConstraints>1<<20) {
-        constraints = new BigArray();
+        constraints = new BigArray__default['default']();
     } else {
         constraints = [];
     }
@@ -191,12 +78,12 @@ async function readConstraints(fd,sections, r1cs, logger, loggerCtx) {
 }
 
 async function readMap(fd, sections, r1cs, logger, loggerCtx) {
-    const bMap = await readSection(fd, sections, 3);
+    const bMap = await binFileUtils.readSection(fd, sections, 3);
     let bMapPos = 0;
     let map;
 
     if (r1cs.nVars>1<<20) {
-        map = new BigArray();
+        map = new BigArray__default['default']();
     } else {
         map = [];
     }
@@ -222,7 +109,7 @@ async function readMap(fd, sections, r1cs, logger, loggerCtx) {
 
 async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
 
-    const {fd, sections} = await readBinFile(fileName, "r1cs", 1, 1<<25, 1<<22);
+    const {fd, sections} = await binFileUtils.readBinFile(fileName, "r1cs", 1, 1<<25, 1<<22);
 
     const res = await readR1csHeader(fd, sections, singleThread);
 
@@ -244,9 +131,9 @@ async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger
 
 
 async function writeR1csHeader(fd, cir) {
-    await startWriteSection(fd, 1);
+    await binFileUtils.startWriteSection(fd, 1);
     await fd.writeULE32(cir.n8); // Temporally set to 0 length
-    await writeBigInt(fd, cir.prime, cir.n8);
+    await binFileUtils.writeBigInt(fd, cir.prime, cir.n8);
 
     await fd.writeULE32(cir.nVars);
     await fd.writeULE32(cir.nOutputs);
@@ -255,18 +142,18 @@ async function writeR1csHeader(fd, cir) {
     await fd.writeULE64(cir.nLabels);
     await fd.writeULE32(cir.constraints.length);
 
-    await endWriteSection(fd);
+    await binFileUtils.endWriteSection(fd);
 }
 
 async function writeR1csConstraints(fd, cir, logger, loggerCtx) {
-    await startWriteSection(fd, 2);
+    await binFileUtils.startWriteSection(fd, 2);
 
     for (let i=0; i<cir.constraints.length; i++) {
         if ((logger)&&(i%10000 == 0)) logger.info(`${loggerCtx}: writing constraint: ${i}/${cir.constraints.length}`);
         await writeConstraint(cir.constraints[i]);
     }
 
-    await endWriteSection(fd);
+    await binFileUtils.endWriteSection(fd);
 
 
     function writeConstraint(c) {
@@ -307,7 +194,7 @@ async function writeR1csConstraints(fd, cir, logger, loggerCtx) {
 
 
 async function writeR1csMap(fd, cir, logger, loggerCtx) {
-    await startWriteSection(fd, 3);
+    await binFileUtils.startWriteSection(fd, 3);
 
     if (cir.map.length != cir.nVars) throw new Error("Invalid map size");
     for (let i=0; i<cir.nVars; i++) {
@@ -315,14 +202,14 @@ async function writeR1csMap(fd, cir, logger, loggerCtx) {
         await fd.writeULE64(cir.map[i]);
     }
 
-    await endWriteSection(fd);
+    await binFileUtils.endWriteSection(fd);
 }
 
 
 
 async function writeR1cs(fileName, cir, logger, loggerCtx) {
 
-    const fd = await createBinFile(fileName, "r1cs", 1, 3, 1<<25, 1<<22);
+    const fd = await binFileUtils.createBinFile(fileName, "r1cs", 1, 3, 1<<25, 1<<22);
 
     await writeR1csHeader(fd, cir);
 
