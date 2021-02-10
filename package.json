@@ -38,12 +38,10 @@
     "@iden3/bigarray": "0.0.2",
     "@iden3/binfileutils": "0.0.8",
     "fastfile": "0.0.19",
-    "ffjavascript": "0.2.34"
+    "ffjavascript": "0.2.35"
   },
   "devDependencies": {
     "eslint": "^6.8.0",
-    "rollup": "^2.20.0",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-node-resolve": "^5.2.0"
+    "rollup": "^2.20.0"
   }
 }
