@@ -1,7 +1,6 @@
 import * as r1cs from "../src/r1csfile.js";
 import path from "path";
 import assert from "assert";
-import  {  Scalar } from "ffjavascript";
 
 const primeStr = "21888242871839275222246405745257275088548364400416034343698204186575808495617";
 
@@ -87,7 +86,7 @@ export function stringifyBigInts(Fr, o) {
 describe("Parse R1CS file", function () {
     this.timeout(1000000000);
     it("Parse example file", async () => {
-        let cir = await r1cs.readR1cs(path. join("test" , "testutils", "example.r1cs"), true, true);
+        let cir = await r1cs.readR1cs(path.join("test" , "testutils", "example.r1cs"), true, true);
 
         const curve = cir.curve;
         delete cir.Fr;
