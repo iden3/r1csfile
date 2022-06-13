@@ -7,6 +7,7 @@ const primeStr = "21888242871839275222246405745257275088548364400416034343698204
 const expected = {
     "n8": 32,
     "prime": primeStr,
+    "useCustomGates": false,
     "nVars": 7,
     "nOutputs": 1,
     "nPubInputs": 2,
