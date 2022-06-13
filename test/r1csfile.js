@@ -62,7 +62,9 @@ const expected = {
         12,
         15,
         324
-    ]
+    ],
+    customGates: [],
+    customGatesUses: []
 };
 
 export function stringifyBigInts(Fr, o) {
@@ -92,6 +94,7 @@ describe("Parse R1CS file", function () {
         const curve = cir.curve;
         delete cir.Fr;
         delete cir.curve;
+        delete cir.F;
 
         cir = stringifyBigInts(curve.Fr, cir);
 
@@ -107,6 +110,7 @@ describe("Parse R1CS file", function () {
         const curve = cir.curve;
         delete cir.Fr;
         delete cir.curve;
+        delete cir.F;
 
         cir = stringifyBigInts(curve.Fr, cir);
 
