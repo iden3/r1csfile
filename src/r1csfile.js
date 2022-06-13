@@ -29,9 +29,6 @@ export async function readR1csHeader(fd,sections,singleThread) {
         && typeof sections[R1CS_FILE_CUSTOM_GATES_USES_SECTION] !== "undefined" && sections[R1CS_FILE_CUSTOM_GATES_USES_SECTION] !== null;
 
     await binFileUtils.endReadSection(fd);
-    if(res.useCustomGates) {
-        res.customGates = await readCustomGatesListSection(fd, sections);
-    }
 
     return res;
 }
@@ -112,6 +109,13 @@ export async function readMap(fd, sections, r1cs, logger, loggerCtx) {
 }
 
 export async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
+    if( loadConstraints === "object") {
+        loadMap = loadConstraints.loadMap;
+        singleThread = loadConstraints.singleThread;
+        logger = loadConstraints.logger;
+        loggerCtx = loadConstraints.loggerCtx;
+        loadConstraints = loadConstraints.loadConstraints;
+    }
 
     const {fd, sections} = await binFileUtils.readBinFile(fileName, "r1cs", 1, 1<<25, 1<<22);
 
@@ -126,6 +130,10 @@ export async function readR1cs(fileName, loadConstraints, loadMap, singleThread,
 
     if (loadMap) {
         res.map = await readMap(fd, sections, res, logger, loggerCtx);
+    }
+
+    if(res.useCustomGates) {
+        res.customGates = await readCustomGatesListSection(fd, sections);
     }
 
     await fd.close();
