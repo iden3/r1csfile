@@ -109,7 +109,7 @@ export async function readMap(fd, sections, r1cs, logger, loggerCtx) {
 }
 
 export async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
-    if( loadConstraints === "object") {
+    if( typeof loadConstraints === "object") {
         loadMap = loadConstraints.loadMap;
         singleThread = loadConstraints.singleThread;
         logger = loadConstraints.logger;

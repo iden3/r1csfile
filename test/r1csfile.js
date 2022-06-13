@@ -99,4 +99,20 @@ describe("Parse R1CS file", function () {
 
         await curve.terminate();
     });
+
+    it("Parse example file with struct as second parameter", async () => {
+        const struct = {loadConstraints: true, loadMap: true};
+        let cir = await r1cs.readR1cs(path. join("test" , "testutils", "example.r1cs"), struct);
+
+        const curve = cir.curve;
+        delete cir.Fr;
+        delete cir.curve;
+
+        cir = stringifyBigInts(curve.Fr, cir);
+
+        assert.deepEqual(cir, expected);
+
+        await curve.terminate();
+    });
+
 });
