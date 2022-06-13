@@ -109,30 +109,32 @@ export async function readMap(fd, sections, r1cs, logger, loggerCtx) {
 }
 
 export async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
-    if( typeof loadConstraints === "object") {
-        loadMap = loadConstraints.loadMap;
-        singleThread = loadConstraints.singleThread;
-        logger = loadConstraints.logger;
-        loggerCtx = loadConstraints.loggerCtx;
-        loadConstraints = loadConstraints.loadConstraints;
-    }
+    const config = {
+        loadMap,
+        singleThread,
+        loggerCtx,
+        loadConstraints
+    };
 
-    const {fd, sections} = await binFileUtils.readBinFile(fileName, "r1cs", 1, 1<<25, 1<<22);
+    return await readR1csFromConfig(fileName, config);
+}
 
-    const res = await readR1csHeader(fd, sections, singleThread);
+export async function readR1csFromConfig(fileName, config) {
+    const {fd, sections} = await binFileUtils.readBinFile(fileName, "r1cs", 1, 1 << 25, 1 << 22);
+
+    const res = await readR1csHeader(fd, sections, config.singleThread);
 
 
-    if (loadConstraints) {
-        res.constraints = await readConstraints(fd, sections, res, logger, loggerCtx);
+    if (config.loadConstraints) {
+        res.constraints = await readConstraints(fd, sections, res, config.logger, config.loggerCtx);
     }
 
     // Read Labels
-
-    if (loadMap) {
-        res.map = await readMap(fd, sections, res, logger, loggerCtx);
+    if (config.loadMap) {
+        res.map = await readMap(fd, sections, res, config.logger, config.loggerCtx);
     }
 
-    if(res.useCustomGates) {
+    if (res.useCustomGates) {
         res.customGates = await readCustomGatesListSection(fd, sections);
     }
 

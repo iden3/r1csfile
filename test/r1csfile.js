@@ -102,7 +102,7 @@ describe("Parse R1CS file", function () {
 
     it("Parse example file with struct as second parameter", async () => {
         const struct = {loadConstraints: true, loadMap: true};
-        let cir = await r1cs.readR1cs(path. join("test" , "testutils", "example.r1cs"), struct);
+        let cir = await r1cs.readR1csFromConfig(path. join("test" , "testutils", "example.r1cs"), struct);
 
         const curve = cir.curve;
         delete cir.Fr;
@@ -114,5 +114,4 @@ describe("Parse R1CS file", function () {
 
         await curve.terminate();
     });
-
 });
