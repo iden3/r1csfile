@@ -224,7 +224,7 @@ Total Number of wires private input wires. They should be starting just after th
 Size: 8 bytes
 Format: Little-Endian
 
-Total Number of wires private input wires. They should be starting just after the private inputs
+Total Number of wires private input wires. They should be starting just after the public inputs
 
 #### Number of constraints (m)
 
