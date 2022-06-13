@@ -2,6 +2,11 @@ import {getCurveFromR} from "ffjavascript";
 import  BigArray from "@iden3/bigarray";
 import * as binFileUtils from "@iden3/binfileutils";
 
+export const R1CS_FILE_HEADER_SECTION = 1;
+export const R1CS_FILE_CONSTRAINTS_SECTION = 2;
+export const R1CS_FILE_WIRE2LABELID_SECTION = 3;
+export const R1CS_FILE_CUSTOM_GATES_LIST_SECTION = 4;
+export const R1CS_FILE_CUSTOM_GATES_USES_SECTION = 5;
 
 export async function readR1csHeader(fd,sections,singleThread) {
 
@@ -20,7 +25,13 @@ export async function readR1csHeader(fd,sections,singleThread) {
     res.nPrvInputs = await fd.readULE32();
     res.nLabels = await fd.readULE64();
     res.nConstraints = await fd.readULE32();
+    res.useCustomGates = typeof sections[R1CS_FILE_CUSTOM_GATES_LIST_SECTION] !== "undefined" && sections[R1CS_FILE_CUSTOM_GATES_LIST_SECTION] !== null
+        && typeof sections[R1CS_FILE_CUSTOM_GATES_USES_SECTION] !== "undefined" && sections[R1CS_FILE_CUSTOM_GATES_USES_SECTION] !== null;
+
     await binFileUtils.endReadSection(fd);
+    if(res.useCustomGates) {
+        res.customGates = await readCustomGatesListSection(fd, sections);
+    }
 
     return res;
 }
@@ -122,6 +133,47 @@ export async function readR1cs(fileName, loadConstraints, loadMap, singleThread,
     return res;
 }
 
+export async function readCustomGatesListSection(fd, sections) {
+    await binFileUtils.startReadUniqueSection(fd, sections, R1CS_FILE_CUSTOM_GATES_LIST_SECTION);
+
+    let num = await fd.readULE32();
+
+    let customGates = [];
+    for (let i = 0; i < num; i++) {
+        let customGate = {};
+        customGate.templateName = await fd.readString();
+        let numParameters = await fd.readULE32();
+        customGate.parameters = [];
+        for (let j = 0; j < numParameters; j++) {
+            customGate.parameters.push(await fd.readULE32());
+        }
+        customGates.push(customGate);
+    }
+    await binFileUtils.endReadSection(fd);
+
+    return customGates;
+}
+
+export async function readCustomGatesUsesSection(fd, sections) {
+    await binFileUtils.startReadUniqueSection(fd, sections, R1CS_FILE_CUSTOM_GATES_USES_SECTION);
+
+    let num = await fd.readULE32();
+
+    let customGatesUses = [];
+    for (let i = 0; i < num; i++) {
+        let customGatesUse = {};
+        customGatesUse.id = await fd.readULE32();
+        let numSignals = await fd.readULE32();
+        customGatesUse.signals = [];
+        for (let j = 0; j < numSignals; j++) {
+            customGatesUse.signals.push(await fd.readULE64());
+        }
+        customGatesUses.push(customGatesUse);
+    }
+    await binFileUtils.endReadSection(fd);
+
+    return customGatesUses;
+}
 
 export async function writeR1csHeader(fd, cir) {
     await binFileUtils.startWriteSection(fd, 1);
@@ -212,5 +264,3 @@ export async function writeR1cs(fileName, cir, logger, loggerCtx) {
 
     await fd.close();
 }
-
-
