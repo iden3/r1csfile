@@ -9,7 +9,18 @@ export const R1CS_FILE_CUSTOM_GATES_LIST_SECTION = 4;
 export const R1CS_FILE_CUSTOM_GATES_USES_SECTION = 5;
 
 export async function readR1csHeader(fd,sections,singleThread) {
-
+    let options;
+    if (typeof singleThread === "object") {
+        options = singleThread;
+    } else if (typeof singleThread === "undefined") {
+        options= {
+            singleThread: false,
+        };
+    } else {
+        options = {
+            singleThread: singleThread,
+        };
+    }
 
     const res = {};
     await binFileUtils.startReadUniqueSection(fd, sections, 1);
@@ -17,7 +28,18 @@ export async function readR1csHeader(fd,sections,singleThread) {
     res.n8 = await fd.readULE32();
     res.prime = await binFileUtils.readBigInt(fd, res.n8);
 
-    res.curve = await getCurveFromR(res.prime, singleThread);
+    if (options.F) {
+        if (options.F.p != res.prime) throw new Error("Different Prime");
+        res.F = options.F;
+    } else if (options.getFieldFromPrime) {
+        res.F = await options.getCurveFromPrime(res.prime, options.singleThread);
+    } else if (options.getCurveFromPrime) {
+        res.curve = await options.getCurveFromPrime(res.prime, options.singleThread);
+        res.F = res.curve.Fr;
+    } else {
+        res.curve = await getCurveFromR(res.prime, options.singleThread);
+        res.F = res.curve.Fr;
+    }
 
     res.nVars = await fd.readULE32();
     res.nOutputs = await fd.readULE32();
@@ -34,6 +56,18 @@ export async function readR1csHeader(fd,sections,singleThread) {
 }
 
 export async function readConstraints(fd,sections, r1cs, logger, loggerCtx) {
+    let options;
+    if (typeof logger === "object") {
+        options = logger;
+    } else if (typeof logger === "undefined") {
+        options= {};
+    } else {
+        options = {
+            logger: logger,
+            loggerCtx: loggerCtx,
+        };
+    }
+
     const bR1cs = await binFileUtils.readSection(fd, sections, 2);
     let bR1csPos = 0;
     let constraints;
@@ -43,7 +77,7 @@ export async function readConstraints(fd,sections, r1cs, logger, loggerCtx) {
         constraints = [];
     }
     for (let i=0; i<r1cs.nConstraints; i++) {
-        if ((logger)&&(i%100000 == 0)) logger.info(`${loggerCtx}: Loading constraints: ${i}/${r1cs.nConstraints}`);
+        if ((options.logger)&&(i%100000 == 0)) options.logger.info(`${options.loggerCtx}: Loading constraints: ${i}/${r1cs.nConstraints}`);
         const c = readConstraint();
         constraints.push(c);
     }
@@ -71,7 +105,7 @@ export async function readConstraints(fd,sections, r1cs, logger, loggerCtx) {
         const buffV = new DataView(buff.buffer);
         for (let i=0; i<nIdx; i++) {
             const idx = buffV.getUint32(i*(4+r1cs.n8), true);
-            const val = r1cs.curve.Fr.fromRprLE(buff, i*(4+r1cs.n8)+4);
+            const val = r1cs.F.fromRprLE(buff, i*(4+r1cs.n8)+4);
             lc[idx] = val;
         }
         return lc;
@@ -79,6 +113,17 @@ export async function readConstraints(fd,sections, r1cs, logger, loggerCtx) {
 }
 
 export async function readMap(fd, sections, r1cs, logger, loggerCtx) {
+    let options;
+    if (typeof logger === "object") {
+        options = logger;
+    } else if (typeof logger === "undefined") {
+        options= {};
+    } else {
+        options = {
+            logger: logger,
+            loggerCtx: loggerCtx,
+        };
+    }
     const bMap = await binFileUtils.readSection(fd, sections, 3);
     let bMapPos = 0;
     let map;
@@ -89,7 +134,7 @@ export async function readMap(fd, sections, r1cs, logger, loggerCtx) {
         map = [];
     }
     for (let i=0; i<r1cs.nVars; i++) {
-        if ((logger)&&(i%10000 == 0)) logger.info(`${loggerCtx}: Loading map: ${i}/${r1cs.nVars}`);
+        if ((options.logger)&&(i%10000 == 0)) options.logger.info(`${options.loggerCtx}: Loading map: ${i}/${r1cs.nVars}`);
         const idx = readULE64();
         map.push(idx);
     }
@@ -109,33 +154,50 @@ export async function readMap(fd, sections, r1cs, logger, loggerCtx) {
 }
 
 export async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
-    const config = {
-        loadMap,
-        singleThread,
-        loggerCtx,
-        loadConstraints
-    };
+    let options;
+    if (typeof loadConstraints === "object") {
+        options = loadConstraints;
+    } else if (typeof loadConstraints === "undefined") {
+        options= {
+            loadConstraints: true,
+            loadMap: false,
+            loadCustomGates: true
+        };
+    } else {
+        options = {
+            loadConstraints: loadConstraints,
+            loadMap: loadMap,
+            singleThread: singleThread,
+            logger: logger,
+            loggerCtx: loggerCtx
+        };
+    }
+    if (typeof options.loadConstraints === "undefined") options.loadConstraints=true;
+    if (typeof options.loadMap === "undefined") options.loadMap=false;
+    if (typeof options.loadCustomGates === "undefined") options.loadCustomGates=true;
 
-    return await readR1csFromConfig(fileName, config);
-}
+    const {fd, sections} = await binFileUtils.readBinFile(fileName, "r1cs", 1, 1<<25, 1<<22);
 
-export async function readR1csFromConfig(fileName, config) {
-    const {fd, sections} = await binFileUtils.readBinFile(fileName, "r1cs", 1, 1 << 25, 1 << 22);
+    const res = await readR1csHeader(fd, sections, options);
 
-    const res = await readR1csHeader(fd, sections, config.singleThread);
-
-
-    if (config.loadConstraints) {
-        res.constraints = await readConstraints(fd, sections, res, config.logger, config.loggerCtx);
+    if (options.loadConstraints) {
+        res.constraints = await readConstraints(fd, sections, res, options);
     }
 
     // Read Labels
-    if (config.loadMap) {
-        res.map = await readMap(fd, sections, res, config.logger, config.loggerCtx);
+
+    if (options.loadMap) {
+        res.map = await readMap(fd, sections, res, options);
     }
 
-    if (res.useCustomGates) {
-        res.customGates = await readCustomGatesListSection(fd, sections);
+    if (options.loadCustomGates) {
+        if (res.useCustomGates) {
+            res.customGates = await readCustomGatesListSection(fd, sections);
+            res.customGatesUses = await readCustomGatesUsesSection(fd, sections, options);
+        } else {
+            res.customGates = [];
+            res.customGatesUses = [];
+        }
     }
 
     await fd.close();
@@ -164,13 +226,14 @@ export async function readCustomGatesListSection(fd, sections) {
     return customGates;
 }
 
-export async function readCustomGatesUsesSection(fd, sections) {
+export async function readCustomGatesUsesSection(fd, sections, options) {
     await binFileUtils.startReadUniqueSection(fd, sections, R1CS_FILE_CUSTOM_GATES_USES_SECTION);
 
     let num = await fd.readULE32();
 
     let customGatesUses = [];
     for (let i = 0; i < num; i++) {
+        if ((options.logger)&&(i%100000 == 0)) options.logger.info(`${options.loggerCtx}: Loading constraints: ${i}/${num}`);
         let customGatesUse = {};
         customGatesUse.id = await fd.readULE32();
         let numSignals = await fd.readULE32();
@@ -213,7 +276,7 @@ export async function writeR1csConstraints(fd, cir, logger, loggerCtx) {
 
     function writeConstraint(c) {
         const n8 = cir.n8;
-        const F = cir.curve.Fr;
+        const F = cir.F || cir.curve.Fr;
         const idxA = Object.keys(c[0]);
         const idxB = Object.keys(c[1]);
         const idxC = Object.keys(c[2]);
