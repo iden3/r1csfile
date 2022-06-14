@@ -13,7 +13,7 @@
     "doc": "doc"
   },
   "scripts": {
-    "test": "mocha",
+    "test": "mocha --timeout 60000",
     "build": "rollup -c rollup.cjs.config.js"
   },
   "repository": {
