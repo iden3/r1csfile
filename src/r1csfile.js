@@ -1,4 +1,4 @@
-import {getCurveFromR} from "ffjavascript";
+import {BigBuffer, getCurveFromR} from "ffjavascript";
 import  BigArray from "@iden3/bigarray";
 import * as binFileUtils from "@iden3/binfileutils";
 
@@ -192,7 +192,7 @@ export async function readR1cs(fileName, loadConstraints, loadMap, singleThread,
 
     if (options.loadCustomGates) {
         if (res.useCustomGates) {
-            res.customGates = await readCustomGatesListSection(fd, sections);
+            res.customGates = await readCustomGatesListSection(fd, sections, res.F.n8);
             res.customGatesUses = await readCustomGatesUsesSection(fd, sections, options);
         } else {
             res.customGates = [];
@@ -205,7 +205,7 @@ export async function readR1cs(fileName, loadConstraints, loadMap, singleThread,
     return res;
 }
 
-export async function readCustomGatesListSection(fd, sections) {
+export async function readCustomGatesListSection(fd, sections, fieldSize) {
     await binFileUtils.startReadUniqueSection(fd, sections, R1CS_FILE_CUSTOM_GATES_LIST_SECTION);
 
     let num = await fd.readULE32();
@@ -215,9 +215,12 @@ export async function readCustomGatesListSection(fd, sections) {
         let customGate = {};
         customGate.templateName = await fd.readString();
         let numParameters = await fd.readULE32();
-        customGate.parameters = [];
+
+        customGate.parameters = Array(numParameters);
+        let buff = await fd.read(fieldSize * numParameters);
+
         for (let j = 0; j < numParameters; j++) {
-            customGate.parameters.push(await fd.readULE32());
+            customGate.parameters[j] = buff.slice(j * fieldSize, j * fieldSize + fieldSize);
         }
         customGates.push(customGate);
     }
