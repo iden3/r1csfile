@@ -5,7 +5,7 @@
     "import": "./src/r1csfile.js",
     "require": "./build/main.cjs"
   },
-  "version": "0.0.36",
+  "version": "0.0.37",
   "description": "r1cs file format parser",
   "main": "./build/main.cjs",
   "module": "./src/r1csfile.js",
