@@ -1,4 +1,4 @@
-import {getCurveFromR} from "ffjavascript";
+import {F1Field, getCurveFromR} from "ffjavascript";
 import  BigArray from "@iden3/bigarray";
 import * as binFileUtils from "@iden3/binfileutils";
 
@@ -32,13 +32,17 @@ export async function readR1csHeader(fd,sections,singleThread) {
         if (options.F.p != res.prime) throw new Error("Different Prime");
         res.F = options.F;
     } else if (options.getFieldFromPrime) {
-        res.F = await options.getCurveFromPrime(res.prime, options.singleThread);
+        res.F = await options.getFieldFromPrime(res.prime, options.singleThread);
     } else if (options.getCurveFromPrime) {
         res.curve = await options.getCurveFromPrime(res.prime, options.singleThread);
         res.F = res.curve.Fr;
     } else {
-        res.curve = await getCurveFromR(res.prime, options.singleThread);
-        res.F = res.curve.Fr;
+        try {
+            res.curve = await getCurveFromR(res.prime, options.singleThread);
+            res.F = res.curve.Fr;
+        } catch (err) {
+            res.F = new F1Field(res.prime);
+        }
     }
 
     res.nVars = await fd.readULE32();
@@ -192,8 +196,8 @@ export async function readR1cs(fileName, loadConstraints, loadMap, singleThread,
 
     if(options.loadCustomGates) {
         if (res.useCustomGates) {
-            res.customGates = await readCustomGatesListSection(fd, sections);
-            res.customGatesUses = await readCustomGatesUsesSection(fd, sections);
+            res.customGates = await readCustomGatesListSection(fd, sections, options);
+            res.customGatesUses = await readCustomGatesUsesSection(fd, sections, options);
         } else {
             res.customGates = [];
             res.customGatesUses = [];

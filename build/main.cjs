@@ -59,13 +59,17 @@ async function readR1csHeader(fd,sections,singleThread) {
         if (options.F.p != res.prime) throw new Error("Different Prime");
         res.F = options.F;
     } else if (options.getFieldFromPrime) {
-        res.F = await options.getCurveFromPrime(res.prime, options.singleThread);
+        res.F = await options.getFieldFromPrime(res.prime, options.singleThread);
     } else if (options.getCurveFromPrime) {
         res.curve = await options.getCurveFromPrime(res.prime, options.singleThread);
         res.F = res.curve.Fr;
     } else {
-        res.curve = await ffjavascript.getCurveFromR(res.prime, options.singleThread);
-        res.F = res.curve.Fr;
+        try {
+            res.curve = await ffjavascript.getCurveFromR(res.prime, options.singleThread);
+            res.F = res.curve.Fr;
+        } catch (err) {
+            res.F = new ffjavascript.F1Field(res.prime);
+        }
     }
 
     res.nVars = await fd.readULE32();
@@ -220,7 +224,7 @@ async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger
     if(options.loadCustomGates) {
         if (res.useCustomGates) {
             res.customGates = await readCustomGatesListSection(fd, sections);
-            res.customGatesUses = await readCustomGatesUsesSection(fd, sections);
+            res.customGatesUses = await readCustomGatesUsesSection(fd, sections, options);
         } else {
             res.customGates = [];
             res.customGatesUses = [];
