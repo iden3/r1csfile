@@ -270,7 +270,7 @@ async function readCustomGatesUsesSection(fd, sections, options) {
         let numSignals = await fd.readULE32();
         customGatesUse.signals = [];
         for (let j = 0; j < numSignals; j++) {
-            customGatesUse.signals.push(await fd.readULE64());
+            customGatesUse.signals.push(await fd.readULE32());
         }
         customGatesUses.push(customGatesUse);
     }
