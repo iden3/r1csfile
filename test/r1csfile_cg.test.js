@@ -37,9 +37,9 @@ describe("Parse R1CS Custom Gates Sections file", function () {
         for (let i = 0; i < cgList.length; i++) {
             for (let j = 0; j < cgList[i].parameters.length; j++) {
                 cgList[i].parameters[j] = cir.F.e(cgList[i].parameters[j]);
-
             }
         }
+
         assert.deepEqual(cir.customGates, cgList);
         assert.deepEqual(cir.customGatesUses, cgUses);
 
