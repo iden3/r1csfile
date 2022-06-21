@@ -157,30 +157,21 @@ export async function readMap(fd, sections, r1cs, logger, loggerCtx) {
 
 }
 
-export async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
-    let options;
-    if (typeof loadConstraints === "object") {
-        options = loadConstraints;
-    } else if (typeof loadConstraints === "undefined") {
-        options= {
-            loadConstraints: true,
-            loadMap: false,
-            loadCustomGates: true
-        };
-    } else {
-        options = {
-            loadConstraints: loadConstraints,
-            loadMap: loadMap,
-            singleThread: singleThread,
-            logger: logger,
-            loggerCtx: loggerCtx
-        };
-    }
-    if (typeof options.loadConstraints === "undefined") options.loadConstraints=true;
-    if (typeof options.loadMap === "undefined") options.loadMap=false;
-    if (typeof options.loadCustomGates === "undefined") options.loadCustomGates=true;
+export async function readR1csFd(fd, sections, options) {
+    /**
+     * Options properties:
+     *  loadConstraints: <bool> true by default
+     *  loadMap:         <bool> false by default
+     *  loadCustomGates: <bool> true by default
+     */
 
-    const {fd, sections} = await binFileUtils.readBinFile(fileName, "r1cs", 1, 1<<25, 1<<22);
+    if(typeof options !== "object") {
+        throw new Error("readR1csFd: options must be an object");
+    }
+
+    options.loadConstraints = options.loadConstraints || true;
+    options.loadMap = options.loadMap || false;
+    options.loadCustomGates = options.loadCustomGates || true;
 
     const res = await readR1csHeader(fd, sections, options);
 
@@ -203,6 +194,32 @@ export async function readR1cs(fileName, loadConstraints, loadMap, singleThread,
             res.customGatesUses = [];
         }
     }
+    return res;
+}
+
+export async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
+    let options;
+    if (typeof loadConstraints === "object") {
+        options = loadConstraints;
+    } else if (typeof loadConstraints === "undefined") {
+        options= {
+            loadConstraints: true,
+            loadMap: false,
+            loadCustomGates: true
+        };
+    } else {
+        options = {
+            loadConstraints: loadConstraints,
+            loadMap: loadMap,
+            singleThread: singleThread,
+            logger: logger,
+            loggerCtx: loggerCtx
+        };
+    }
+
+    const {fd, sections} = await binFileUtils.readBinFile(fileName, "r1cs", 1, 1<<25, 1<<22);
+
+    const res = await readR1csFd(fd, sections, options);
 
     await fd.close();
 
