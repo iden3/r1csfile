@@ -157,6 +157,43 @@ export async function readMap(fd, sections, r1cs, logger, loggerCtx) {
 
 }
 
+async function readR1csFd(fd, sections, options) {
+    /**
+     * Options is a struct to indicate what to read from the file
+     *  options: {
+     *      loadConstraints: <bool> true by default
+     *      loadMap:         <bool> false by default
+     *      loadCustomGates: <bool> true by default
+     *  }
+     */
+    options.loadConstraints = options.loadConstraints || true;
+    options.loadMap = options.loadMap || false;
+    options.loadCustomGates = options.loadCustomGates || true;
+    
+    const res = await readR1csHeader(fd, sections, options);
+
+    if (options.loadConstraints) {
+        res.constraints = await readConstraints(fd, sections, res, options);
+    }
+
+    // Read Labels
+
+    if (options.loadMap) {
+        res.map = await readMap(fd, sections, res, options);
+    }
+
+    if (options.loadCustomGates) {
+        if (res.useCustomGates) {
+            res.customGates = await readCustomGatesListSection(fd, sections, options);
+            res.customGatesUses = await readCustomGatesUsesSection(fd, sections, options);
+        } else {
+            res.customGates = [];
+            res.customGatesUses = [];
+        }
+    }
+    return res;
+}
+
 export async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger, loggerCtx) {
     let options;
     if (typeof loadConstraints === "object") {
@@ -182,27 +219,7 @@ export async function readR1cs(fileName, loadConstraints, loadMap, singleThread,
 
     const {fd, sections} = await binFileUtils.readBinFile(fileName, "r1cs", 1, 1<<25, 1<<22);
 
-    const res = await readR1csHeader(fd, sections, options);
-
-    if (options.loadConstraints) {
-        res.constraints = await readConstraints(fd, sections, res, options);
-    }
-
-    // Read Labels
-
-    if (options.loadMap) {
-        res.map = await readMap(fd, sections, res, options);
-    }
-
-    if(options.loadCustomGates) {
-        if (res.useCustomGates) {
-            res.customGates = await readCustomGatesListSection(fd, sections, options);
-            res.customGatesUses = await readCustomGatesUsesSection(fd, sections, options);
-        } else {
-            res.customGates = [];
-            res.customGatesUses = [];
-        }
-    }
+    const res = await readR1csFd(fd, sections, options);
 
     await fd.close();
 
