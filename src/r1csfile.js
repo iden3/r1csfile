@@ -157,19 +157,22 @@ export async function readMap(fd, sections, r1cs, logger, loggerCtx) {
 
 }
 
-async function readR1csFd(fd, sections, options) {
+export async function readR1csFd(fd, sections, options) {
     /**
-     * Options is a struct to indicate what to read from the file
-     *  options: {
-     *      loadConstraints: <bool> true by default
-     *      loadMap:         <bool> false by default
-     *      loadCustomGates: <bool> true by default
-     *  }
+     * Options properties:
+     *  loadConstraints: <bool> true by default
+     *  loadMap:         <bool> false by default
+     *  loadCustomGates: <bool> true by default
      */
+
+    if(typeof options !== "object") {
+        throw new Error("readR1csFd: options must be an object");
+    }
+
     options.loadConstraints = options.loadConstraints || true;
     options.loadMap = options.loadMap || false;
     options.loadCustomGates = options.loadCustomGates || true;
-    
+
     const res = await readR1csHeader(fd, sections, options);
 
     if (options.loadConstraints) {
