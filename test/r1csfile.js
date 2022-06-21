@@ -118,5 +118,4 @@ describe("Parse R1CS file", function () {
 
         await curve.terminate();
     });
-
 });
