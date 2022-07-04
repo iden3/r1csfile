@@ -418,9 +418,9 @@ The linear combination would be represented as:
 Section Type: 0x03
 
 ````
-┏━━┳━━━━━━━━━━━━━━━━━━━┳━━┳━━━━━━━━━━━━━━━━━━━┓     ┏━━┳━━━━━━━━━━━━━━━━━━━┓
-┃64│ labelId of Wire_0 ┃64│ labelId of Wire_1 ┃ ... ┃64│ labelId of Wire_n ┃
-┗━━┻━━━━━━━━━━━━━━━━━━━┻━━┻━━━━━━━━━━━━━━━━━━━┛     ┗━━┻━━━━━━━━━━━━━━━━━━━┛
+┏━━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━┳━━━━━━━━━━━━━━━━━━━┓     ┏━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃ 64 │ labelId of Wire_0 ┃ 64 │ labelId of Wire_1 ┃ ... ┃ 64 │ labelId of Wire_n ┃
+┗━━━━┻━━━━━━━━━━━━━━━━━━━┻━━━━┻━━━━━━━━━━━━━━━━━━━┛     ┗━━━━┻━━━━━━━━━━━━━━━━━━━┛
 ````
 
 
@@ -430,33 +430,33 @@ Section Type: 0x04
 
 ````
      ┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-     ┃ 4  ┃ Number of custom gates M                    ┃
+     ┃ 32 ┃ Number of custom gates M                    ┃
      ┗━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
      Custom gate 0
      ┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-     ┃ N  ┃ Custom gate template name                   ┃ Sequence of N 1-byte char ending with 0x0
+     ┃    ┃ Custom gate template name                   ┃ Sequence of N 1-byte char ending with 0x0
      ┣━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-     ┃ 4  ┃ Number of custom gate template parameters K ┃
+     ┃ 32 ┃ Number of template parameters N0            ┃
      ┣━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-     ┃ 4  ┃ Parameter 0                                 ┃
-     ┃ 4  ┃ Parameter 2                                 ┃
+     ┃ fs ┃ Parameter 0                                 ┃
+     ┃ fs ┃ Parameter 2                                 ┃
      ┃ ...                                              ┃
-     ┃ 4  ┃ Parameter K-1                               ┃
+     ┃ fs ┃ Parameter N0-1                              ┃
      ┗━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
      ...
      ...
      ...
      Custom gate M-1
      ┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-     ┃ N  ┃ Custom gate template name                   ┃ Sequence of N 1-byte char ending with 0x0
+     ┃    ┃ Custom gate template name                   ┃ Sequence of N 1-byte char ending with 0x0
      ┣━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-     ┃ 4  ┃ Custom gate template parameters K           ┃
+     ┃ 32 ┃ Number of template parameters Nm            ┃
      ┣━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-     ┃ 4  ┃ Parameter 0                                 ┃
-     ┃ 4  ┃ Parameter 2                                 ┃
+     ┃ fs ┃ Parameter 0                                 ┃
+     ┃ fs ┃ Parameter 2                                 ┃
      ┃ ...                                              ┃
-     ┃ 4  ┃ Parameter K-1                               ┃
+     ┃ fs ┃ Parameter Nm-1                              ┃
      ┗━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 ````
 
@@ -468,33 +468,33 @@ Section Type: 0x05
 
 ````
      ┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-     ┃ 4  ┃ Number of Custom gates applications N ┃
+     ┃ 32 ┃ Number of Custom gates applications N ┃
      ┗━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
      Application 0
      ┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-     ┃ 4  ┃ Custom gate identifier                ┃
+     ┃ 32 ┃ Custom gate identifier                ┃
      ┣━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-     ┃ 4  ┃ Number of signals S                   ┃
+     ┃ 32 ┃ Number of signals S                   ┃
      ┣━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-     ┃ 4  ┃ Signal 0                              ┃
-     ┃ 4  ┃ Signal 1                              ┃
+     ┃ 32 ┃ Signal 0                              ┃
+     ┃ 32 ┃ Signal 1                              ┃
        ...
-     ┃ 4  ┃ Signal S-1                            ┃
+     ┃ 32 ┃ Signal S-1                            ┃
      ┗━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
      ...
      ...
      ...
      Application N-1
      ┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-     ┃ 4  ┃ Custom gate identifier                ┃
+     ┃ 32 ┃ Custom gate identifier                ┃
      ┣━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-     ┃ 4  ┃ Number of signals S                   ┃
+     ┃ 32 ┃ Number of signals S                   ┃
      ┣━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-     ┃ 4  ┃ Signal 0                              ┃
-     ┃ 4  ┃ Signal 1                              ┃
+     ┃ 32 ┃ Signal 0                              ┃
+     ┃ 32 ┃ Signal 1                              ┃
        ...
-     ┃ 4  ┃ Signal S-1                            ┃
+     ┃ 32 ┃ Signal S-1                            ┃
      ┗━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 ````
 
