@@ -277,25 +277,28 @@ async function readCustomGatesListSection(fd, sections, fieldSize) {
     return customGates;
 }
 
-async function readCustomGatesUsesSection(fd, sections, options) {
-    await binFileUtils__namespace.startReadUniqueSection(fd, sections, R1CS_FILE_CUSTOM_GATES_USES_SECTION);
-
-    let num = await fd.readULE32();
-
-    let customGatesUses = [];
-    for (let i = 0; i < num; i++) {
-        if ((options.logger)&&(i%100000 == 0)) options.logger.info(`${options.loggerCtx}: Loading constraints: ${i}/${num}`);
-        let customGatesUse = {};
-        customGatesUse.id = await fd.readULE32();
-        let numSignals = await fd.readULE32();
-        customGatesUse.signals = [];
-        for (let j = 0; j < numSignals; j++) {
-            customGatesUse.signals.push(await fd.readULE32());
-        }
-        customGatesUses.push(customGatesUse);
+async function readCustomGatesUsesSection(fd,sections, options) {
+    const bR1cs = await binFileUtils__namespace.readSection(fd, sections, R1CS_FILE_CUSTOM_GATES_USES_SECTION);
+    const bR1cs32 = new Uint32Array(bR1cs.buffer, bR1cs.byteOffset, bR1cs.byteLength/4);
+    const nCustomGateUses = bR1cs32[0];
+    let bR1csPos = 1;
+    let customGatesUses;
+    if (nCustomGateUses>1<<20) {
+        customGatesUses = new BigArray__default["default"]();
+    } else {
+        customGatesUses = [];
     }
-    await binFileUtils__namespace.endReadSection(fd);
-
+    for (let i=0; i<nCustomGateUses; i++) {
+        if ((options.logger)&&(i%100000 == 0)) options.logger.info(`${options.loggerCtx}: Loading custom gate uses: ${i}/${nCustomGateUses}`);
+        let c = {};
+        c.id = bR1cs32[bR1csPos++];
+        let numSignals = bR1cs32[bR1csPos++];
+        c.signals = [];
+        for (let j = 0; j < numSignals; j++) {
+            c.signals.push(bR1cs32[bR1csPos++]);
+        }
+        customGatesUses.push(c);
+    }
     return customGatesUses;
 }
 
