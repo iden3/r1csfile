@@ -8,7 +8,7 @@ export const R1CS_FILE_WIRE2LABELID_SECTION = 3;
 export const R1CS_FILE_CUSTOM_GATES_LIST_SECTION = 4;
 export const R1CS_FILE_CUSTOM_GATES_USES_SECTION = 5;
 
-export async function readR1csHeader(fd,sections,singleThread) {
+export async function readR1csHeader(fd, sections, singleThread) {
     let options;
     if (typeof singleThread === "object") {
         options = singleThread;
@@ -24,7 +24,9 @@ export async function readR1csHeader(fd,sections,singleThread) {
 
     const res = {};
     await binFileUtils.startReadUniqueSection(fd, sections, 1);
+
     // Read Header
+    // n8 is the byte size of a field element
     res.n8 = await fd.readULE32();
     res.prime = await binFileUtils.readBigInt(fd, res.n8);
 
@@ -59,7 +61,7 @@ export async function readR1csHeader(fd,sections,singleThread) {
     return res;
 }
 
-export async function readConstraints(fd,sections, r1cs, logger, loggerCtx) {
+export async function readConstraints(fd, sections, r1cs, logger, loggerCtx) {
     let options;
     if (typeof logger === "object") {
         options = logger;
@@ -75,7 +77,7 @@ export async function readConstraints(fd,sections, r1cs, logger, loggerCtx) {
     const bR1cs = await binFileUtils.readSection(fd, sections, 2);
     let bR1csPos = 0;
     let constraints;
-    if (r1cs.nConstraints>1<<20) {
+    if (r1cs.nConstraints > 1<<20) {
         constraints = new BigArray();
     } else {
         constraints = [];
@@ -102,8 +104,9 @@ export async function readConstraints(fd,sections, r1cs, logger, loggerCtx) {
         const buffUL32 = bR1cs.slice(bR1csPos, bR1csPos+4);
         bR1csPos += 4;
         const buffUL32V = new DataView(buffUL32.buffer);
+        // Number of non-zero terms in the LC
         const nIdx = buffUL32V.getUint32(0, true);
-
+        
         const buff = bR1cs.slice(bR1csPos, bR1csPos + (4+r1cs.n8)*nIdx );
         bR1csPos += (4+r1cs.n8)*nIdx;
         const buffV = new DataView(buff.buffer);

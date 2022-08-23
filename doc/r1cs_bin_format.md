@@ -2,14 +2,14 @@
 
 ## Simple Summary
 
-This standard defines a standard format for a binery representation of a r1cs constraint system.
+This standard defines a standard format for a binary representation of a r1cs constraint system.
 
 ## Abstract
 
 
 ## Motivation
 
-The zero knowledge primitives, requires the definition of a statment that wants to be proved. This statment can be expressed as a deterministric program or an algebraic circuit. Lots of primitives like zkSnarks, bulletProofs or aurora, requires to convert this statment to a rank-one constraint system.
+The zero knowledge primitives, requires the definition of a statement that wants to be proved. This statement can be expressed as a deterministic program or an algebraic circuit. Lots of primitives like zkSnarks, bulletProofs or aurora, requires to convert this statement to a rank-one constraint system.
 
 This standard specifies a format for a r1cs and allows the to connect a set of tools that compiles a program or a circuit to r1cs that can be used for the zksnarks or bulletproofs primitives.
 
@@ -20,9 +20,9 @@ This standard specifies a format for a r1cs and allows the to connect a set of t
 The standard extension is `.r1cs`
 
 
-A deterministic program (or circuit) is a program that generates a set of deterministic values given an input. All those values are labeled from l_{0} to l_{n_labels}
+A deterministic program (or circuit) is a program that generates a set of deterministic values given an input. All those values are labeled from $l_{0}$ to $l_{n_{labels}}$
 
-This file defines a map beween l_{i} -> w_{j}  and defines a series a R1CS of the form
+This file defines a map between $l_{i}$ -> $w_{j}$  and defines a series a R1CS of the form
 
 $$
 \left\{  \begin{array}{rclclcl}
@@ -82,7 +82,7 @@ Wire 0 must be always mapped to label 0 and it's an input forced to value "1" im
 
 #### Magic Number
 
-Size: 4 bytes
+Size: 4 bytes  
 The file start with a constant 4 bytes (magic number) "r1cs"
 
 ```
@@ -91,7 +91,7 @@ The file start with a constant 4 bytes (magic number) "r1cs"
 
 #### Version
 
-Size: 4 bytes
+Size: 4 bytes  
 Format: Little-Endian
 
 For this standard it's fixed to
@@ -102,14 +102,14 @@ For this standard it's fixed to
 
 #### Number of Sections
 
-Size: 4 bytes
+Size: 4 bytes  
 Format: Little-Endian
 
 Number of sections contained in the file
 
 #### SectionType
 
-Size: 4 bytes
+Size: 4 bytes  
 Format: Little-Endian
 
 Type of the section.
@@ -133,7 +133,7 @@ Example:
 
 #### SectionSize
 
-Size: `ws` bytes
+Size: 8 bytes  
 Format: Little-Endian
 
 Size in bytes of the section
@@ -146,7 +146,7 @@ Section Type: 0x01
      ┃ 4  │   20 00 00 00   ┃               Field Size in bytes (fs)
      ┗━━━━┻━━━━━━━━━━━━━━━━━┛
      ┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-     ┃ fs │   010000f0 93f5e143 9170b979 48e83328 5d588181 b64550b8 29a031e1 724e6430 ┃  Prime size
+     ┃ fs │   010000f0 93f5e143 9170b979 48e83328 5d588181 b64550b8 29a031e1 724e6430 ┃  Prime
      ┗━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
      ┏━━━━┳━━━━━━━━━━━━━━━━━┓
      ┃ 32 │   01 00 00 00   ┃               nWires
@@ -170,9 +170,9 @@ Section Type: 0x01
 
 ````
 
-#### field Size (fs)
+#### Field Size (fs)
 
-Size: 4 bytes
+Size: 4 bytes  
 Format: Little-Endian
 
 Size in bytes of a field element. Must be a multiple of 8.
@@ -193,42 +193,42 @@ Example:
 
 #### Number of wires
 
-Size: 4 bytes
+Size: 4 bytes  
 Format: Little-Endian
 
-Total Number of wires including ONE signal (Index 0).
+Total Number of wires including the ONE signal (Index 0).
 
 #### Number of public outputs
 
-Size: 4 bytes
+Size: 4 bytes  
 Format: Little-Endian
 
-Total Number of wires public output wires. They should be starting at idx 1
+Total Number of public output wires. They should be starting at idx 1
 
 #### Number of public inputs
 
-Size: 4 bytes
+Size: 4 bytes  
 Format: Little-Endian
 
-Total Number of wires public input wires. They should be starting just after the public output
+Total Number of public input wires. They should be starting just after the public outputs
 
 #### Number of private inputs
 
-Size: 4 bytes
+Size: 4 bytes  
 Format: Little-Endian
 
-Total Number of wires private input wires. They should be starting just after the public inputs
+Total Number of private input wires. They should be starting just after the public inputs
 
 #### Number of Labels
 
-Size: 8 bytes
+Size: 8 bytes  
 Format: Little-Endian
 
-Total Number of wires private input wires. They should be starting just after the public inputs
+Total Number of wires including the public outputs and inputs, private inputs and the ONE signal.
 
 #### Number of constraints (m)
 
-Size: 4 bytes
+Size: 4 bytes  
 Format: Little-Endian
 
 Total Number of constraints
@@ -370,7 +370,7 @@ $$
 
 #### Number of nonZero Factors
 
-Size: 4 bytes
+Size: 4 bytes  
 Format: Little-Endian
 
 Total number of non Zero factors in the linear combination.
@@ -383,7 +383,7 @@ For each factor we have the index of the factor and the value of the factor.
 
 #### WireId of the factor
 
-Size: 4 bytes
+Size: 4 bytes  
 Format: Little-Endian
 
 WireId of the nonZero Factor
@@ -506,9 +506,9 @@ Variable size for field elements allows to shrink the size of the file and allow
 
 Version allows to update the format.
 
-Have a very good comprasion ratio for sparse r1cs as it's the normal case.
+Have a very good comparison ratio for sparse r1cs as it's the normal case.
 
-The motivation of having a map between l and w is that this allows optimizers to calculate equivalent r1cs systems but keeping the original values geneated by the circuit.
+The motivation of having a map between l and w is that this allows optimizers to calculate equivalent r1cs systems but keeping the original values generated by the circuit.
 
 
 ## Backward Compatibility
