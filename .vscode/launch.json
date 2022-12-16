@@ -17,5 +17,18 @@
             ],
             "runtimeArgs": ["--max-old-space-size=32000"]
         },
+        {
+            "name": "test custom gates",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "pwa-node",
+            "args": [
+                "${workspaceFolder}/test/r1csfile_cg.test.js"
+            ],
+            "runtimeArgs": ["--max-old-space-size=32000"]
+        },
     ]
 }

@@ -214,7 +214,7 @@ async function readR1csFd(fd, sections, options) {
 
     if (options.loadCustomGates) {
         if (res.useCustomGates) {
-            res.customGates = await readCustomGatesListSection(fd, sections, res.n8);
+            res.customGates = await readCustomGatesListSection(fd, sections, res);
             res.customGatesUses = await readCustomGatesUsesSection(fd, sections, options);
         } else {
             res.customGates = [];
@@ -253,7 +253,7 @@ async function readR1cs(fileName, loadConstraints, loadMap, singleThread, logger
     return res;
 }
 
-async function readCustomGatesListSection(fd, sections, fieldSize) {
+async function readCustomGatesListSection(fd, sections, res) {
     await binFileUtils__namespace.startReadUniqueSection(fd, sections, R1CS_FILE_CUSTOM_GATES_LIST_SECTION);
 
     let num = await fd.readULE32();
@@ -265,11 +265,10 @@ async function readCustomGatesListSection(fd, sections, fieldSize) {
         let numParameters = await fd.readULE32();
 
         customGate.parameters = Array(numParameters);
-        let buff = await fd.read(fieldSize * numParameters);
+        let buff = await fd.read(res.n8 * numParameters);
 
         for (let j = 0; j < numParameters; j++) {
-            customGate.parameters[j] = buff.slice(j * fieldSize, j * fieldSize + fieldSize);
-        }
+            customGate.parameters[j] = res.F.fromRprLE(buff, j * res.n8, res.n8);        }
         customGates.push(customGate);
     }
     await binFileUtils__namespace.endReadSection(fd);
