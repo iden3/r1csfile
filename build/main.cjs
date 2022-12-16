@@ -214,7 +214,7 @@ async function readR1csFd(fd, sections, options) {
 
     if (options.loadCustomGates) {
         if (res.useCustomGates) {
-            res.customGates = await readCustomGatesListSection(fd, sections, res.F.n8);
+            res.customGates = await readCustomGatesListSection(fd, sections, res.n8);
             res.customGatesUses = await readCustomGatesUsesSection(fd, sections, options);
         } else {
             res.customGates = [];
