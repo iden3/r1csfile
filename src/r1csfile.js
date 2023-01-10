@@ -169,9 +169,9 @@ export async function readR1csFd(fd, sections, options) {
         throw new Error("readR1csFd: options must be an object");
     }
 
-    options.loadConstraints = options.loadConstraints || true;
-    options.loadMap = options.loadMap || false;
-    options.loadCustomGates = options.loadCustomGates || true;
+    options.loadConstraints = "loadConstraints" in options ? options.loadConstraints : true;
+    options.loadMap = "loadMap" in options ? options.loadMap : false;
+    options.loadCustomGates = "loadCustomGates" in options ? options.loadCustomGates : true;
 
     const res = await readR1csHeader(fd, sections, options);
 
