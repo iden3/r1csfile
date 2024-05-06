@@ -41,7 +41,7 @@
     "ffjavascript": "0.3.0"
   },
   "devDependencies": {
-    "eslint": "^8.6.0",
+    "eslint": "^9.2.0",
     "mocha": "^10.0.0",
     "rollup": "^2.20.0"
   }
