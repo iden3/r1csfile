@@ -2,7 +2,7 @@
 
 ## Simple Summary
 
-This standard defines a standard format for a binery representation of a r1cs constraint system.
+This standard defines a standard format for a binary representation of a r1cs constraint system.
 
 ## Abstract
 
