@@ -40,7 +40,7 @@ export async function readR1csHeader(fd,sections,singleThread) {
         try {
             res.curve = await getCurveFromR(res.prime, options.singleThread);
             res.F = res.curve.Fr;
-        } catch (err) {
+        } catch (_err) {
             res.F = new F1Field(res.prime);
         }
     }
