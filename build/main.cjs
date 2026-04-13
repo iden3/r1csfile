@@ -23,9 +23,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 //#endregion
 let ffjavascript = require("ffjavascript");
 let _iden3_bigarray = require("@iden3/bigarray");
-_iden3_bigarray = __toESM(_iden3_bigarray);
+_iden3_bigarray = __toESM(_iden3_bigarray, 1);
 let _iden3_binfileutils = require("@iden3/binfileutils");
-_iden3_binfileutils = __toESM(_iden3_binfileutils);
+_iden3_binfileutils = __toESM(_iden3_binfileutils, 1);
 //#region src/r1csfile.js
 var R1CS_FILE_HEADER_SECTION = 1;
 var R1CS_FILE_CONSTRAINTS_SECTION = 2;
