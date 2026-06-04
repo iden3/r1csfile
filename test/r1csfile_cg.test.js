@@ -25,8 +25,12 @@ describe("Parse R1CS Custom Gates Sections file", function () {
     it("Parse R1CS Custom Gates example file", async () => {
         const filePath = fixturePath("circuitCG.r1cs");
         const { fd, sections } = await binFileUtils.readBinFile(filePath, "r1cs", 1, 1<<25, 1<<22);
-        const cir = await readR1csFd(fd, sections, { loadCustomGates: true });
-        await fd.close();
+        let cir;
+        try {
+            cir = await readR1csFd(fd, sections, { loadCustomGates: true });
+        } finally {
+            await fd.close();
+        }
 
         for (let i = 0; i < cir.customGates.length; i++) {
             for (let j = 0; j < cir.customGates[i].parameters.length; j++) {

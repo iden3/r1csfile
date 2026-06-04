@@ -41,6 +41,9 @@
     "url": "https://github.com/iden3/r1csfile/issues"
   },
   "homepage": "https://github.com/iden3/r1csfile#readme",
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.1.0",
