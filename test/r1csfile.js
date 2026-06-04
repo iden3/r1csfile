@@ -64,9 +64,12 @@ function fixturePath(filename) {
 async function readR1csFixture(filename, opts) {
     const filePath = fixturePath(filename);
     const { fd, sections } = await binFileUtils.readBinFile(filePath, "r1cs", 1, 1<<25, 1<<22);
-    const res = await r1cs.readR1csFd(fd, sections, opts);
-    await fd.close();
-    return res;
+    try {
+        const res = await r1cs.readR1csFd(fd, sections, opts);
+        return res;
+    } finally {
+        await fd.close();
+    }
 }
 
 describe("Parse R1CS file", function () {
