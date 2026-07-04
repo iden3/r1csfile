@@ -1,5 +1,5 @@
 import * as r1cs from "../src/r1csfile.js";
-import { F1Field, getCurveFromR } from "ffjavascript";
+import { F1Field } from "ffjavascript";
 import * as binFileUtils from "@iden3/binfileutils";
 import path from "path";
 import assert from "assert";
@@ -22,7 +22,6 @@ const collectingLogger = (lines) => ({
 });
 
 describe("R1CS writing and reading round-trip", function () {
-    this.timeout(1000000000);
 
     it("writeR1cs(readR1cs(file)) preserves the circuit", async () => {
         const cir = await r1cs.readR1cs(examplePath, { loadConstraints: true, loadMap: true });
@@ -127,7 +126,6 @@ describe("R1CS writing and reading round-trip", function () {
 });
 
 describe("readR1csHeader field-resolution options", function () {
-    this.timeout(1000000000);
 
     async function withFd(cb) {
         const { fd, sections } = await binFileUtils.readBinFile(examplePath, "r1cs", 1, 1 << 20, 1 << 14);
@@ -179,7 +177,6 @@ describe("readR1csHeader field-resolution options", function () {
 });
 
 describe("reader entry points and legacy signatures", function () {
-    this.timeout(1000000000);
 
     it("readR1cs with no options loads constraints and custom gates by default", async () => {
         const cir = await r1cs.readR1cs(examplePath);
@@ -236,7 +233,6 @@ describe("reader entry points and legacy signatures", function () {
 });
 
 describe("BigArray paths for circuits above the 2^20 threshold", function () {
-    this.timeout(1000000000);
 
     it("uses BigArray for constraints, map and custom gate uses", async () => {
         // Craft a syntactically valid r1cs with (2^20)+1 empty constraints,
