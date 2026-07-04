@@ -1,6 +1,7 @@
 import * as r1cs from "../src/r1csfile.js";
+import * as binFileUtils from "@iden3/binfileutils";
 import path from "path";
-import assert from "assert";
+import { expect } from "vitest";
 
 const primeStr = "21888242871839275222246405745257275088548364400416034343698204186575808495617";
 
@@ -16,58 +17,25 @@ const expected = {
     "nConstraints": 3,
     "constraints": [
         [
-            {
-                "5": "3",
-                "6": "8"
-            },
-            {
-                "0": "2",
-                "2": "20",
-                "3": "12"
-            },
-            {
-                "0": "5",
-                "2": "7"
-            }
+            { "5": "3", "6": "8" },
+            { "0": "2", "2": "20", "3": "12" },
+            { "0": "5", "2": "7" }
         ],[
-            {
-                "1": "4",
-                "4": "8",
-                "5": "3"
-            },
-            {
-                "3": "44",
-                "6": "6"
-            },
+            { "1": "4", "4": "8", "5": "3" },
+            { "3": "44", "6": "6" },
             {}
         ],[
-            {
-                "6": "4"
-            },
-            {
-                "0": "6",
-                "2": "11",
-                "3": "5"
-            },
-            {
-                "6": "600"
-            }
+            { "6": "4" },
+            { "0": "6", "2": "11", "3": "5" },
+            { "6": "600" }
         ]
     ],
-    "map": [
-        0,
-        3,
-        10,
-        11,
-        12,
-        15,
-        324
-    ],
+    "map": [0, 3, 10, 11, 12, 15, 324],
     customGates: [],
     customGatesUses: []
 };
 
-export function stringifyBigInts(Fr, o) {
+function stringifyBigInts(Fr, o) {
     if ((typeof(o) == "bigint") || o.eq !== undefined)  {
         return o.toString(10);
     } else if (o instanceof Uint8Array) {
@@ -86,10 +54,30 @@ export function stringifyBigInts(Fr, o) {
     }
 }
 
+function fixturePath(filename) {
+    if (typeof window !== "undefined") {
+        return window.location.origin + "/test/testutils/" + filename;
+    }
+    return path.join("test", "testutils", filename);
+}
+
+async function readR1csFixture(filename, opts) {
+    const filePath = fixturePath(filename);
+    const { fd, sections } = await binFileUtils.readBinFile(filePath, "r1cs", 1, 1<<25, 1<<22);
+    try {
+        return await r1cs.readR1csFd(fd, sections, opts);
+    } finally {
+        await fd.close();
+    }
+}
+
 describe("Parse R1CS file", function () {
-    this.timeout(1000000000);
     it("Parse example file", async () => {
-        let cir = await r1cs.readR1cs(path.join("test" , "testutils", "example.r1cs"), true, true);
+        let cir = await readR1csFixture("example.r1cs", {
+            loadConstraints: true,
+            loadMap: true,
+            loadCustomGates: true,
+        });
 
         const curve = cir.curve;
         delete cir.Fr;
@@ -98,14 +86,17 @@ describe("Parse R1CS file", function () {
 
         cir = stringifyBigInts(curve.Fr, cir);
 
-        assert.deepEqual(cir, expected);
+        expect(cir).toEqual(expected);
 
         await curve.terminate();
     });
 
     it("Parse example file with struct as second parameter", async () => {
-        const struct = {loadConstraints: true, loadMap: true};
-        let cir = await r1cs.readR1cs(path. join("test" , "testutils", "example.r1cs"), struct);
+        let cir = await readR1csFixture("example.r1cs", {
+            loadConstraints: true,
+            loadMap: true,
+            loadCustomGates: true,
+        });
 
         const curve = cir.curve;
         delete cir.Fr;
@@ -114,7 +105,7 @@ describe("Parse R1CS file", function () {
 
         cir = stringifyBigInts(curve.Fr, cir);
 
-        assert.deepEqual(cir, expected);
+        expect(cir).toEqual(expected);
 
         await curve.terminate();
     });
