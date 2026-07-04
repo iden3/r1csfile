@@ -1,15 +1,10 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', { value: true });
-
 var ffjavascript = require('ffjavascript');
 var BigArray = require('@iden3/bigarray');
 var binFileUtils = require('@iden3/binfileutils');
 
-function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-function _interopNamespace(e) {
-    if (e && e.__esModule) return e;
+function _interopNamespaceDefault(e) {
     var n = Object.create(null);
     if (e) {
         Object.keys(e).forEach(function (k) {
@@ -22,12 +17,11 @@ function _interopNamespace(e) {
             }
         });
     }
-    n["default"] = e;
+    n.default = e;
     return Object.freeze(n);
 }
 
-var BigArray__default = /*#__PURE__*/_interopDefaultLegacy(BigArray);
-var binFileUtils__namespace = /*#__PURE__*/_interopNamespace(binFileUtils);
+var binFileUtils__namespace = /*#__PURE__*/_interopNamespaceDefault(binFileUtils);
 
 const R1CS_FILE_HEADER_SECTION = 1;
 const R1CS_FILE_CONSTRAINTS_SECTION = 2;
@@ -67,7 +61,7 @@ async function readR1csHeader(fd,sections,singleThread) {
         try {
             res.curve = await ffjavascript.getCurveFromR(res.prime, options.singleThread);
             res.F = res.curve.Fr;
-        } catch (err) {
+        } catch {
             res.F = new ffjavascript.F1Field(res.prime);
         }
     }
@@ -103,7 +97,7 @@ async function readConstraints(fd,sections, r1cs, logger, loggerCtx) {
     let bR1csPos = 0;
     let constraints;
     if (r1cs.nConstraints>1<<20) {
-        constraints = new BigArray__default["default"]();
+        constraints = new BigArray();
     } else {
         constraints = [];
     }
@@ -160,7 +154,7 @@ async function readMap(fd, sections, r1cs, logger, loggerCtx) {
     let map;
 
     if (r1cs.nVars>1<<20) {
-        map = new BigArray__default["default"]();
+        map = new BigArray();
     } else {
         map = [];
     }
@@ -283,7 +277,7 @@ async function readCustomGatesUsesSection(fd,sections, options) {
     let bR1csPos = 1;
     let customGatesUses;
     if (nCustomGateUses>1<<20) {
-        customGatesUses = new BigArray__default["default"]();
+        customGatesUses = new BigArray();
     } else {
         customGatesUses = [];
     }
