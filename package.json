@@ -42,7 +42,7 @@
     "@iden3/bigarray": "0.0.2",
     "@iden3/binfileutils": "0.0.12",
     "fastfile": "0.0.20",
-    "ffjavascript": "git+https://github.com/iden3/ffjavascript.git#8430220603e7f1d57ee0a18cac2f14bf507a5326"
+    "ffjavascript": "git+https://github.com/iden3/ffjavascript.git#9f3109dad2f585b61ad054ed9fe5fc40681bad2f"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
