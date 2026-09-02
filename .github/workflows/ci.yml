@@ -1,30 +1,45 @@
 name: Continuous Integration
-on: [push, pull_request]
+
+# Least privilege: no job needs write access to the repository.
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   test:
     name: Test
-    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        node-version: ["18", "20"]
+        node-version: [lts/*, lts/-1]
 
     steps:
       - name: Checkout project
-        uses: actions/checkout@v2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          # no job pushes: never persist the GITHUB_TOKEN into .git/config
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: ${{ matrix.node-version }}
-          check-latest: true
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        timeout-minutes: 10
+        run: npm ci --ignore-scripts
+
+      - name: Verify registry signatures and provenance attestations
+        run: npm audit signatures
 
       - name: Run tests
         run: npm test

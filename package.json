@@ -13,8 +13,11 @@
     "doc": "doc"
   },
   "scripts": {
-    "test": "mocha --timeout 60000",
-    "build": "rollup -c rollup.cjs.config.js"
+    "lint": "eslint .",
+    "clean": "node -e \"fs.rmSync('build',{recursive:true,force:true})\"",
+    "test": "npm run build && npm run lint && vitest run",
+    "test:watch": "vitest --project node-esm",
+    "build": "npm run clean && vite build"
   },
   "repository": {
     "type": "git",
@@ -38,11 +41,19 @@
     "@iden3/bigarray": "0.0.2",
     "@iden3/binfileutils": "0.0.12",
     "fastfile": "0.0.20",
-    "ffjavascript": "0.3.0"
+    "ffjavascript": "git+https://github.com/iden3/ffjavascript.git#27a93c3f382845b573b66f9eb52cd3f6ff41dffb"
   },
   "devDependencies": {
-    "eslint": "^8.6.0",
-    "mocha": "^10.0.0",
-    "rollup": "^2.20.0"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
+    "vite": "^8.0.3",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.5",
+    "diff": "^8.0.3",
+    "postcss": "^8.5.26",
+    "brace-expansion": "^5.0.9"
   }
 }
